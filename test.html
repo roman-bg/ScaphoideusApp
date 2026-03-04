@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Памукова нощенка – мобилен календар</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: #d9e8c5;
+            min-height: 100vh;
+            display: flex;
+            padding: 8px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        /* мобилен card – почти цял екран */
+        .mobile-calendar {
+            max-width: 480px;
+            width: 100%;
+            background: #f8ffeef0;
+            backdrop-filter: blur(2px);
+            border-radius: 32px 32px 28px 28px;
+            box-shadow: 0 10px 25px -10px #1f3f1a, 0 4px 12px rgba(70, 100, 30, 0.3);
+            border: 2px solid #b1cf92;
+            padding: 16px 12px 20px 12px;
+        }
+
+        /* заглавие – по-компактно */
+        .header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .title h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1b4f1b;
+            line-height: 1.2;
+        }
+
+        .title h1 span {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #466a30;
+            display: block;
+        }
+
+        .season-badge {
+            background: #b8da96;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #143014;
+            border: 2px solid #6d954b;
+            align-self: flex-start;
+            box-shadow: 0 3px 0 #51733b;
+        }
+
+        /* легенда – хоризонтално пренасяне, плитко */
+        .legend-scroll {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 8px 4px 12px 4px;
+            margin-bottom: 8px;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            background: #e3f0d1;
+            border-radius: 50px;
+            border: 1px solid #aac489;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f3ffe3;
+            padding: 5px 16px 5px 10px;
+            border-radius: 40px;
+            border: 1px solid #86a65e;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1b421b;
+            box-shadow: 0 2px 4px #b0cb92;
+            flex-shrink: 0;
+        }
+
+        .color-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px 10px 10px 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .dot-egg { background: #fee69c; border: 2px solid #bc8f2b; }
+        .dot-larva { background: #c6e034; border: 2px solid #56801b; }
+        .dot-pupa { background: #c88f5a; border: 2px solid #724520; }
+        .dot-moth { background: #bcb872; border: 2px solid #56502a; background: linear-gradient(145deg, #dad58b, #9f9e4d); }
+
+        /* месеци – малки квадратчета с първа буква */
+        .months-row-compact {
+            display: flex;
+            justify-content: space-around;
+            background: #cde0b6;
+            padding: 8px 4px;
+            border-radius: 40px;
+            margin: 10px 0 12px 0;
+            border: 1px solid #82a85a;
+            font-weight: 600;
+            color: #154015;
+        }
+        .months-row-compact span {
+            width: 32px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        /* ===== ОСНОВНА КАЛЕНДАРНА ЧАСТ ===== */
+        .stage-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 8px;
+        }
+
+        /* всяка карта за един стадий */
+        .stage-card {
+            background: white;
+            border-radius: 40px 24px 24px 40px;
+            border: 2px solid #98ba78;
+            box-shadow: inset 0 1px 5px #e5ffcd, 0 6px 0 #6b8f4e;
+            overflow: hidden;
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #c5e2a8;
+            padding: 12px 18px;
+            border-bottom: 2px solid #70944c;
+        }
+
+        .stage-header .icon {
+            font-size: 2rem;
+            filter: drop-shadow(2px 4px 4px #587735);
+        }
+
+        .stage-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #113411;
+            letter-spacing: -0.5px;
+        }
+
+        /* хоризонтален ред за месеците вътре в картата – може да се скролва */
+        .stage-months {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 16px 12px;
+            background: #f3ffdf;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+
+        .month-block {
+            scroll-snap-align: start;
+            flex: 0 0 auto;
+            width: 100px;
+            background: #fffff0;
+            border-radius: 28px;
+            padding: 12px 6px;
+            border: 2px solid #b2d18d;
+            box-shadow: 0 4px 0 #819f60;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* активен месец (съдържа стадия) */
+        .month-block.active {
+            background: #fffae4;
+            border-color: #a9814b;
+            box-shadow: 0 4px 0 #a47d45;
+        }
+
+        .month-name {
+            font-weight: 800;
+            font-size: 1rem;
+            background: #d1e5b3;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 40px;
+            margin-bottom: 10px;
+            border: 1px solid #719351;
+            color: #1c401c;
+        }
+
+        .phase-symbol {
+            font-size: 2.2rem;
+            line-height: 1;
+            filter: drop-shadow(2px 4px 4px #9baf76);
+            margin: 5px 0 2px;
+        }
+
+        .phase-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: #bcd69e;
+            padding: 5px 8px;
+            border-radius: 40px;
+            color: #003300;
+            width: 100%;
+            border: 1px solid #4d7032;
+        }
+
+        /* празен / неактивен месец */
+        .month-block.inactive {
+            background: #e6eed9;
+            border-color: #adbb91;
+            box-shadow: 0 4px 0 #7e9a60;
+            opacity: 0.8;
+        }
+        .month-block.inactive .phase-symbol { opacity: 0.5; }
+
+        /* Долна информация */
+        .footer-note {
+            background: #cbe0b2;
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 36px;
+            border: 2px solid #729751;
+            color: #0f380f;
+            font-size: 0.85rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+        }
+
+        .duration {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            background: white;
+            border-radius: 30px;
+            padding: 5px 14px;
+            border: 2px solid #49753b;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* дребна подсказка */
+        .hint {
+            font-size: 0.75rem;
+            text-align: center;
+            color: #366129;
+            background: #e6f3d3;
+            border-radius: 50px;
+            padding: 10px 12px;
+            margin-top: 12px;
+            border: 1px solid #99b77a;
+        }
+
+        /* ново copyright лого най-отдолу */
+        .association-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            background: #ecfad8;
+            padding: 14px 12px;
+            border-radius: 60px;
+            border: 3px solid #7d9f5b;
+            color: #153015;
+            box-shadow: 0 5px 0 #5c8042;
+            letter-spacing: 0.3px;
+        }
+
+        /* по-добър touch скрол */
+        .stage-months::-webkit-scrollbar {
+            height: 5px;
+        }
+        .stage-months::-webkit-scrollbar-thumb {
+            background: #769953;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-calendar">
+        <div class="header">
+            <div class="title">
+                <h1>🌾 Памукова нощенка <span>Helicoverpa armigera · жизнен цикъл</span></h1>
+            </div>
+            <div class="season-badge">⏳ април – октомври · 2–4 поколения</div>
+        </div>
+
+        <!-- хоризонтална легенда (scrollable) -->
+        <div class="legend-scroll">
+            <div class="legend-item"><span class="color-dot dot-egg"></span> Яйце</div>
+            <div class="legend-item"><span class="color-dot dot-larva"></span> Ларва (гъсеница)</div>
+            <div class="legend-item"><span class="color-dot dot-pupa"></span> Какавида</div>
+            <div class="legend-item"><span class="color-dot dot-moth"></span> Имаго (пеперуда)</div>
+        </div>
+
+        <!-- месеци (съкратени) за ориентир -->
+        <div class="months-row-compact">
+            <span>Апр</span><span>Май</span><span>Юни</span><span>Юли</span><span>Авг</span><span>Сеп</span><span>Окт</span>
+        </div>
+
+        <!-- карти за всеки стадий – лесно скролване хоризонтално -->
+        <div class="stage-cards">
+
+            <!-- ЯЙЦЕ карта -->
+            <div class="stage-card">
+                <div class="stage-header">
+                    <span class="icon">🥚</span>
+                    <h2>ЯЙЦЕ</h2>
+                </div>
+                <div class="stage-months">
+                    <div class="month-block active"><span class="month-name">Април</span><span class="phase-symbol">⚪⚪</span><span class="phase-label">средата · начало</span></div>
+                    <div class="month-block active"><span class="month-name">Май</span><span class="phase-symbol">⚪⚪⚪</span><span class="phase-label">пик · масово</span></div>
+                    <div class="month-block active"><span class="month-name">Юни</span><span class="phase-symbol">⚪⚪</span><span class="phase-label">1‑во поколение</span></div>
+                    <div class="month-block active"><span class="month-name">Юли</span><span class="phase-symbol">⚪⚪⚪</span><span class="phase-label">2‑ро поколение</span></div>
+                    <div class="month-block active"><span class="month-name">Август</span><span class="phase-symbol">⚪⚪⚪</span><span class="phase-label">3‑то поколение</span></div>
+                    <div class="month-block active"><span class="month-name">Септ.</span><span class="phase-symbol">⚪⚪</span><span class="phase-label">късни яйца</span></div>
+                    <div class="month-block inactive"><span class="month-name">Октомври</span><span class="phase-symbol">❄️</span><span class="phase-label">липсват</span></div>
+                </div>
+            </div>
+
+            <!-- ЛАРВА карта -->
+            <div class="stage-card">
+                <div class="stage-header">
+                    <span class="icon">🐛</span>
+                    <h2>ЛАРВА</h2>
+                </div>
+                <div class="stage-months">
+                    <div class="month-block active"><span class="month-name">Април</span><span class="phase-symbol">🐛🐛</span><span class="phase-label">край · малки</span></div>
+                    <div class="month-block active"><span class="month-name">Май</span><span class="phase-symbol">🐛🐛🐛</span><span class="phase-label">активни гъсеници</span></div>
+                    <div class="month-block active"><span class="month-name">Юни</span><span class="phase-symbol">🐛🐛</span><span class="phase-label">първи възрасти</span></div>
+                    <div class="month-block active"><span class="month-name">Юли</span><span class="phase-symbol">🐛🐛🐛</span><span class="phase-label">2‑ра генерация</span></div>
+                    <div class="month-block active"><span class="month-name">Август</span><span class="phase-symbol">🐛🐛🐛</span><span class="phase-label">L3–L5</span></div>
+                    <div class="month-block active"><span class="month-name">Септ.</span><span class="phase-symbol">🐛🐛</span><span class="phase-label">угояване</span></div>
+                    <div class="month-block inactive"><span class="month-name">Окт.</span><span class="phase-symbol">⛔</span><span class="phase-label">диапауза</span></div>
+                </div>
+            </div>
+
+            <!-- КАКАВИДА карта -->
+            <div class="stage-card">
+                <div class="stage-header">
+                    <span class="icon">🪹</span>
+                    <h2>КАКАВИДА</h2>
+                </div>
+                <div class="stage-months">
+                    <div class="month-block inactive"><span class="month-name">Април</span><span class="phase-symbol">🪵</span><span class="phase-label">зимуващи</span></div>
+                    <div class="month-block active"><span class="month-name">Май</span><span class="phase-symbol">🪹🪹</span><span class="phase-label">какавидиране</span></div>
+                    <div class="month-block active"><span class="month-name">Юни</span><span class="phase-symbol">🪹🪹</span><span class="phase-label">първи какавиди</span></div>
+                    <div class="month-block active"><span class="month-name">Юли</span><span class="phase-symbol">🪹</span><span class="phase-label">втора вълна</span></div>
+                    <div class="month-block active"><span class="month-name">Август</span><span class="phase-symbol">🪹🪹</span><span class="phase-label">какавиди</span></div>
+                    <div class="month-block active"><span class="month-name">Септ.</span><span class="phase-symbol">🪹🪹</span><span class="phase-label">преход</span></div>
+                    <div class="month-block active"><span class="month-name">Окт.</span><span class="phase-symbol">🪹❄️</span><span class="phase-label">зимни какавиди</span></div>
+                </div>
+            </div>
+
+            <!-- ИМАГО карта (пеперуда) -->
+            <div class="stage-card">
+                <div class="stage-header">
+                    <span class="icon">🦋</span>
+                    <h2>ИМАГО</h2>
+                </div>
+                <div class="stage-months">
+                    <div class="month-block inactive"><span class="month-name">Април</span><span class="phase-symbol">🌙</span><span class="phase-label">излитане</span></div>
+                    <div class="month-block active"><span class="month-name">Май</span><span class="phase-symbol">🦋🦋</span><span class="phase-label">чифтосване</span></div>
+                    <div class="month-block active"><span class="month-name">Юни</span><span class="phase-symbol">🦋🦋</span><span class="phase-label">активни</span></div>
+                    <div class="month-block active"><span class="month-name">Юли</span><span class="phase-symbol">🦋🦋🦋</span><span class="phase-label">летящи</span></div>
+                    <div class="month-block active"><span class="month-name">Август</span><span class="phase-symbol">🦋🦋</span><span class="phase-label">2‑ро поколение</span></div>
+                    <div class="month-block active"><span class="month-name">Септ.</span><span class="phase-symbol">🦋</span><span class="phase-label">частичен летеж</span></div>
+                    <div class="month-block inactive"><span class="month-name">Окт.</span><span class="phase-symbol">🍂</span><span class="phase-label">затихване</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- допълнителни данни + времетраене -->
+        <div class="footer-note">
+            <div class="duration">
+                <span style="font-size: 2rem;">⏱️</span>
+                <div><strong>25°C:</strong> яйце 3–5д · ларва 18–25д · какавида 12–18д · имаго 10–15д</div>
+            </div>
+            <div class="badge-group">
+                <span class="badge">🔁 2–4 поколения</span>
+                <span class="badge">❄️ зимува какавида</span>
+            </div>
+        </div>
+
+        <div class="hint">
+            👉 Плъзгайте настрани за всички месеци. Активните периоди са в светли блокчета.
+            Данните са съобразени с климат Южна Европа.
+        </div>
+
+        <!-- ✅ ИЗИСКВАН ФУТЕР ✅ -->
+        <div class="association-footer">
+            🌱 проект на Българската асоциация за биологична растителна защита
+        </div>
+
+    </div>
+</body>
+</html>
