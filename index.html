@@ -69,7 +69,7 @@ body {
   border: 1px solid #e0d6ca;
 }
 
-/* НАВИГАЦИЯ 4 ТАБА – КОМПАКТНА */
+/* НАВИГАЦИЯ 5 ТАБА – КОМПАКТНА */
 .nav-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -97,11 +97,11 @@ body {
   color: white;
   border-color: #1b4d3e;
 }
-@media (max-width: 450px) {
+@media (max-width: 500px) {
   .nav-tab { font-size: 0.7rem; padding: 6px 8px; }
 }
 @media (max-width: 360px) {
-  .nav-tab { font-size: 0.65rem; padding: 5px 5px; }
+  .nav-tab { font-size: 0.6rem; padding: 4px 4px; }
 }
 
 /* СЕКЦИИ */
@@ -325,6 +325,48 @@ p, li, .article-content p, .image-caption {
 .control-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 10px; margin-top: 10px; }
 .control-item { background: #ecf6f0; border-radius: 16px; padding: 12px; border-left: 5px solid #1f7f5f; }
 
+/* НОВ РАЗДЕЛ: МОНИТОРИНГ */
+.monitoring-container {
+  background: #faf6f0;
+  border-radius: 24px;
+  padding: 20px;
+  margin: 10px 0;
+  border: 1px solid #d9cec0;
+}
+.trap-image-placeholder {
+  background: #d9e3dc;
+  border-radius: 16px;
+  padding: 40px 20px;
+  text-align: center;
+  margin: 20px 0;
+  border: 2px dashed #7fb095;
+  color: #23624b;
+  font-weight: 500;
+}
+.comparison-badge {
+  display: inline-block;
+  background: #1b4d3e;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  margin-right: 8px;
+}
+.color-chip {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+.color-chip.yellow { background: #FFD700; }
+.color-chip.green { background: #90EE90; }
+.color-chip.blue { background: #87CEEB; }
+.color-chip.white { background: #F5F5F5; }
+.color-chip.black { background: #2F4F4F; }
+
 /* ФОРМУЛЯР */
 .form-container { background: #f1f7f3; border-radius: 28px; padding: 20px; margin: 15px 0; border: 1px solid #cbdcd0; }
 .form-title { font-size: 1.4rem; color: #1b4d3e; margin-bottom: 10px; display: flex; gap: 8px; }
@@ -374,12 +416,6 @@ p, li, .article-content p, .image-caption {
   font-weight: 500;
   letter-spacing: 0.3px;
 }
-
-/* Дребни корекции */
-@media (max-width: 380px) {
-  .nav-tab { font-size: 0.6rem; padding: 4px 4px; }
-  h1 { font-size: 1.1rem; }
-}
 </style>
 </head>
 <body>
@@ -391,10 +427,11 @@ p, li, .article-content p, .image-caption {
 
 <div class="container">
 
-<!-- НАВИГАЦИЯ 4 ТАБА -->
+<!-- НАВИГАЦИЯ 5 ТАБА -->
 <div class="nav-tabs">
 <div class="nav-tab active" onclick="switchTab('determinant')">🔬 Определител</div>
 <div class="nav-tab" onclick="switchTab('article')">📘 Flavescence Dorée</div>
+<div class="nav-tab" onclick="switchTab('monitoring')">🪤 Мониторинг</div>
 <div class="nav-tab" onclick="switchTab('calendar')">📅 Календар</div>
 <div class="nav-tab" onclick="switchTab('report')">🚨 Сигнализирай</div>
 </div>
@@ -492,7 +529,73 @@ p, li, .article-content p, .image-caption {
 </div>
 </div></div>
 
-<!-- ========== СЕКЦИЯ 3: СЕЗОНЕН КАЛЕНДАР ========== -->
+<!-- ========== СЕКЦИЯ 3: МОНИТОРИНГ (ЖЪЛТИ ЛЕПЛИВИ УЛОВКИ) ========== -->
+<div class="section" id="monitoring">
+  <div class="header-flex"><h1>🪤 Мониторинг с жълти уловки <span>Scaphoideus titanus</span></h1></div>
+  <div class="monitoring-container">
+
+    <!-- Встъпление -->
+    <p>Жълтите лепливи (летливи) уловки са стандартен метод за наблюдение на възрастните индивиди от <em>Scaphoideus titanus</em>. Те използват <strong>хромотропната реакция</strong> – силното привличане на цикадата към жълтия цвят. Това позволява ранно откриване, проследяване на динамиката на популацията и вземане на точни решения за растителна защита.</p>
+
+    <!-- Ключови насоки в кутийки -->
+    <div class="stats-grid" style="margin:25px 0;">
+      <div class="stat-card"><div class="stat-number">2-4</div><div class="stat-label">уловки/ха</div></div>
+      <div class="stat-card"><div class="stat-number">юли-септ.</div><div class="stat-label">активен период</div></div>
+      <div class="stat-card"><div class="stat-number">5-7 дни</div><div class="stat-label">период на смяна</div></div>
+      <div class="stat-card"><div class="stat-number">>10×</div><div class="stat-label">разлика в ефект.</div></div>
+    </div>
+
+    <!-- Място за снимка на уловка -->
+    <div class="trap-image-placeholder">
+     <img src="trap.jpg" class="specimen" alt="Scaphoideus titanus" />
+    </div>
+
+    <!-- Цветова ефективност (таблица вдясно) -->
+    <h3>🎨 Ефективност на цветовете (проучване 2021–2023)</h3>
+    <div style="overflow-x: auto; margin: 15px 0;">
+      <table style="width:100%; border-collapse: collapse; background: #ecf6f0; border-radius: 16px;">
+        <tr style="background: #1b4d3e; color: white;"><th>Цвят</th><th>Отн. улов</th><th>Забележка</th></tr>
+        <tr style="background: #fff9e6;"><td><span class="color-chip yellow"></span> Жълт</td><td><strong>висок</strong></td><td>най-привлекателен</td></tr>
+        <tr style="background: #f0f9f0;"><td><span class="color-chip green"></span> Зелен</td><td>среден</td><td>също атрактивен</td></tr>
+        <tr><td><span class="color-chip blue"></span> Син</td><td>нисък</td><td>слаба атракция</td></tr>
+        <tr><td><span class="color-chip white"></span> Бял</td><td>много нисък</td><td>–</td></tr>
+        <tr><td><span class="color-chip black"></span> Черен</td><td>много нисък</td><td>–</td></tr>
+      </table>
+    </div>
+    <p style="font-size:0.9rem">⚠️ Важно: Дори сред жълтите уловки има съществени разлики – някои търговски продукти (напр. Glutor) улавят 10 пъти повече от други (Super color). Изборът трябва да се базира на научни данни.</p>
+
+    <!-- Практически насоки -->
+    <h3>🛠️ Практически насоки за поставяне</h3>
+    <ul class="bullet-list">
+      <li><strong>Брой:</strong> 2–4 уловки на хектар, равномерно разпределени.</li>
+      <li><strong>Височина:</strong> Окачват се в лозовия ред на височината на гроздовия пояс (около 1.2–1.5 m).</li>
+      <li><strong>Период:</strong> От началото на юли (първи възрастни) до края на септември.</li>
+      <li><strong>Смяна:</strong> На всеки 7–14 дни, за да не се препълнят и да запазят лепливост.</li>
+      <li><strong>Отчитане:</strong> Броят се всички уловени <em>S. titanus</em>. Препоръчва се лупа или микроскоп за потвърждение.</li>
+    </ul>
+
+    <!-- Автоматизирани системи -->
+    <div class="highlight-box">
+      <h4>🤖 Автоматизиран мониторинг (Trapview)</h4>
+      <p>Съвременните електронни капани съчетават жълта леплива плоскост с камера и GSM модул. Те изпращат ежедневни снимки в облачна платформа, където снимките могат да се разглеждат дистанционно. Проучвания доказват, че уловът е сравним с ръчния, а данните са в реално време.</p>
+    </div>
+
+    <!-- Интегриране с контрол -->
+    <h3>📈 От мониторинг към решение</h3>
+    <p>Данните от уловките се използват за:</p>
+    <ul class="bullet-list">
+      <li>Оценка на ефективността на ларвицидни третирания (нисък улов на възрастни = успех).</li>
+      <li>Определяне нуждата от допълнителни третирания срещу възрастни (висок улов = риск от пренасяне на фитоплазма).</li>
+    </ul>
+
+    <!-- Бутон за връщане към началото на раздела (не е задължителен) -->
+    <div style="margin-top:30px; text-align:right;">
+      <span class="comparison-badge">Мониторинг спазвай SOP на БАБХ</span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== СЕКЦИЯ 4: СЕЗОНЕН КАЛЕНДАР ========== -->
 <div class="section" id="calendar">
 <div class="header-flex"><h1>📅 Сезонен календар <span>Scaphoideus titanus</span></h1></div>
 <div class="seasonal-calendar">
@@ -531,7 +634,7 @@ p, li, .article-content p, .image-caption {
 </div>
 </div></div></div>
 
-<!-- ========== СЕКЦИЯ 4: ФОРМУЛЯР ЗА СИГНАЛИЗИРАНЕ ========== -->
+<!-- ========== СЕКЦИЯ 5: ФОРМУЛЯР ЗА СИГНАЛИЗИРАНЕ ========== -->
 <div class="section" id="report">
 <div class="header-flex"><h1>🚨 Сигнализирай за огнище <span>БАБХ</span></h1></div>
 <div class="form-container" id="reportForm">
@@ -608,8 +711,17 @@ function restart(){ answers=[]; step=1; showStep(1); updateProgress(); updateSte
 function switchTab(tabId) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach((t,i) => {
-    t.classList.toggle('active', (tabId==='determinant'&&i===0)||(tabId==='article'&&i===1)||(tabId==='calendar'&&i===2)||(tabId==='report'&&i===3));
+  // Актуализиране на активния таб
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach((t, idx) => {
+    t.classList.remove('active');
+    if ((tabId === 'determinant' && idx === 0) ||
+        (tabId === 'article' && idx === 1) ||
+        (tabId === 'monitoring' && idx === 2) ||
+        (tabId === 'calendar' && idx === 3) ||
+        (tabId === 'report' && idx === 4)) {
+      t.classList.add('active');
+    }
   });
 }
 
