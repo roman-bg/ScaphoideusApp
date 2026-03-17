@@ -1,1 +1,533 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+<title>🗺️ Карта на огнищата - Flavescence Dorée</title>
 
+<!-- Leaflet CSS и JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f3efe8;
+  color: #1a2e28;
+  line-height: 1.4;
+  padding: 12px;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 28px;
+  box-shadow: 0 15px 35px -15px rgba(20, 60, 45, 0.3);
+  padding: 20px;
+  border: 1px solid #e0d6ca;
+}
+
+.header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-weight: 700;
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  color: #1b4d3e;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h1 span {
+  background: #ddeee5;
+  padding: 5px 15px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #0f4235;
+}
+
+.subtitle {
+  color: #547a6a;
+  font-size: 0.95rem;
+  border-left: 3px solid #a1c9b6;
+  padding-left: 15px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background: #ecf6f0;
+  border-radius: 20px;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #cbdcd0;
+}
+
+.stat-number {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #1b4d3e;
+  line-height: 1.2;
+}
+
+.stat-label {
+  color: #547a6a;
+  font-size: 0.85rem;
+}
+
+.map-container {
+  background: white;
+  border-radius: 24px;
+  padding: 15px;
+  border: 2px solid #7fb095;
+  margin: 20px 0;
+  box-shadow: 0 8px 20px rgba(0,40,20,0.1);
+}
+
+#outbreak-map {
+  height: 600px;
+  width: 100%;
+  border-radius: 16px;
+  z-index: 1;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin: 15px 0 5px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 50px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.legend-color.quarantine {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(192, 57, 43, 0.2);
+  border: 2px dashed #c0392b;
+}
+
+.table-container {
+  background: #ecf6f0;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 20px 0;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+th {
+  background: #1b4d3e;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.severity-high {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.severity-medium {
+  color: #f39c12;
+  font-weight: 600;
+}
+
+.severity-low {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.footer-note {
+  text-align: center;
+  margin-top: 30px;
+  padding: 16px 10px 8px;
+  border-top: 2px solid #dbd0c2;
+  color: #547a6a;
+  font-size: 0.85rem;
+}
+
+.error {
+  background: #ffefdb;
+  color: #c0392b;
+  padding: 20px;
+  border-radius: 16px;
+  text-align: center;
+  margin: 20px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header-flex">
+    <h1>
+      🗺️ Карта на огнищата
+      <span>Flavescence Dorée</span>
+    </h1>
+    <div class="subtitle">
+      Данни от БАБХ • Актуализация на всеки 30 мин.
+    </div>
+  </div>
+
+  <!-- Статистика -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number" id="total-outbreaks">0</div>
+      <div class="stat-label">общо огнища</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="high-severity">0</div>
+      <div class="stat-label">висок риск</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="medium-severity">0</div>
+      <div class="stat-label">среден риск</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="low-severity">0</div>
+      <div class="stat-label">нисък риск</div>
+    </div>
+  </div>
+
+  <!-- Карта -->
+  <div class="map-container">
+    <div id="outbreak-map"></div>
+
+    <!-- Легенда -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background: #c0392b;"></div>
+        <span>Огнище - висок риск</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #f39c12;"></div>
+        <span>Огнище - среден риск</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #27ae60;"></div>
+        <span>Огнище - нисък риск</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color quarantine"></div>
+        <span>Карантинна зона (2.5 км)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Таблица -->
+  <div class="table-container">
+    <h3 style="color: #1b4d3e; margin-bottom: 15px;">📋 Списък на регистрираните огнища</h3>
+    <table id="outbreaks-table">
+      <thead>
+        <tr>
+          <th>Локация</th>
+          <th>Дата</th>
+          <th>Степен</th>
+          <th>Координати</th>
+          <th>Бележки</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="5" style="text-align: center;">Зареждане...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer-note">
+    Данните се обновяват автоматично от Google Sheets • Българска асоциация за биологична растителна защита
+  </div>
+</div>
+
+<script>
+// --- КОНФИГУРАЦИЯ ---
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQwDEnL0AS8ggJ4NIrhLM50iL4ab4gm7gwXSnu6IP4TE8b8rIRJJSwVROW9zC_Rf_oJvlBjhhpNWFLE/pub?output=csv';
+const QUARANTINE_RADIUS_KM = 2.5;
+
+let map;
+let markers = [];
+let quarantineCircles = [];
+
+// --- ИНИЦИАЛИЗАЦИЯ НА КАРТАТА ---
+function initMap() {
+  map = L.map('outbreak-map').setView([42.7, 25.5], 8);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  // Зареждаме данните чрез fetch
+  loadDataWithFetch();
+}
+
+// --- ЗАРЕЖДАНЕ НА ДАННИ С FETCH ---
+function loadDataWithFetch() {
+  // Показваме съобщение за зареждане
+  document.getElementById('table-body').innerHTML = '<tr><td colspan="5" style="text-align: center;">⏳ Зареждане на данни от Google Sheets...</td></tr>';
+
+  // Използваме fetch с прокси за CORS
+  const proxyUrl = 'https://api.allorigins.win/raw?url=';
+  const targetUrl = encodeURIComponent(CSV_URL);
+
+  fetch(proxyUrl + targetUrl)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Мрежова грешка');
+      }
+      return response.text();
+    })
+    .then(csvText => {
+      // Ръчно парсване на CSV
+      const outbreaks = parseCSV(csvText);
+
+      if (outbreaks.length > 0) {
+        // Филтрираме само валидните
+        const validOutbreaks = outbreaks.filter(o =>
+          o.lat && o.lng &&
+          !isNaN(parseFloat(o.lat)) &&
+          !isNaN(parseFloat(o.lng))
+        );
+
+        updateMap(validOutbreaks);
+        updateStatistics(validOutbreaks);
+        updateTable(validOutbreaks);
+      } else {
+        // Ако няма данни, показваме примерните
+        useSampleData();
+      }
+    })
+    .catch(error => {
+      console.error('Грешка при fetch:', error);
+      // При грешка, използваме примерни данни
+      useSampleData();
+    });
+}
+
+// --- РЪЧНО ПАРСВАНЕ НА CSV ---
+function parseCSV(csvText) {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  // Вземаме заглавията
+  const headers = lines[0].split(',').map(h => h.trim());
+
+  // Парсваме редовете
+  const results = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',').map(v => v.trim());
+
+    // Създаваме обект
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] || '';
+    });
+
+    results.push(row);
+  }
+
+  return results;
+}
+
+// --- ИЗПОЛЗВАНЕ НА ПРИМЕРНИ ДАННИ (ако няма връзка) ---
+function useSampleData() {
+  const sampleData = [
+    {
+      id: '1',
+      location: 'Свищов',
+      lat: '43.6192',
+      lng: '25.3504',
+      date: '15.06.2025',
+      severity: 'висока',
+      notes: 'Лозов масив, 5% заразени'
+    }
+  ];
+
+  updateMap(sampleData);
+  updateStatistics(sampleData);
+  updateTable(sampleData);
+
+  console.log('Използвани примерни данни');
+}
+
+// --- ОБНОВЯВАНЕ НА КАРТАТА ---
+function updateMap(outbreaks) {
+  // Изчистваме старите елементи
+  markers.forEach(marker => map.removeLayer(marker));
+  quarantineCircles.forEach(circle => map.removeLayer(circle));
+  markers = [];
+  quarantineCircles = [];
+
+  outbreaks.forEach(outbreak => {
+    const lat = parseFloat(outbreak.lat);
+    const lng = parseFloat(outbreak.lng);
+    const severity = outbreak.severity || 'ниска';
+
+    // Избор на цвят
+    let markerColor = '#27ae60';
+    if (severity === 'средна' || severity === 'среден') {
+      markerColor = '#f39c12';
+    } else if (severity === 'висока' || severity === 'висок') {
+      markerColor = '#c0392b';
+    }
+
+    // Карантинна зона
+    const quarantineCircle = L.circle([lat, lng], {
+      radius: QUARANTINE_RADIUS_KM * 1000,
+      color: '#c0392b',
+      weight: 2,
+      opacity: 0.6,
+      fillColor: 'rgba(192, 57, 43, 0.1)',
+      fillOpacity: 0.15,
+      dashArray: '5, 5'
+    }).addTo(map);
+
+    quarantineCircle.bindTooltip(`Карантинна зона: ${QUARANTINE_RADIUS_KM} км`, {
+      permanent: false,
+      direction: 'center'
+    });
+
+    quarantineCircles.push(quarantineCircle);
+
+    // Маркер
+    const marker = L.circleMarker([lat, lng], {
+      radius: 8,
+      fillColor: markerColor,
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.9
+    }).addTo(map);
+
+    marker.bindPopup(`
+      <div style="min-width: 200px;">
+        <h3 style="margin: 0 0 8px 0; color: #1b4d3e;">${outbreak.location || 'Неизвестна локация'}</h3>
+        <p style="margin: 5px 0;">
+          <strong>📅 Дата:</strong> ${outbreak.date || 'неизвестна'}<br>
+          <strong>⚠️ Степен:</strong> <span style="color: ${markerColor};">${severity}</span><br>
+          <strong>📍 Координати:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
+          <strong>🚫 Карантина:</strong> ${QUARANTINE_RADIUS_KM} км<br>
+          ${outbreak.notes ? `<strong>📝 Бележка:</strong> ${outbreak.notes}` : ''}
+        </p>
+      </div>
+    `);
+
+    markers.push(marker);
+  });
+
+  if (markers.length > 0) {
+    const group = L.featureGroup(markers);
+    map.fitBounds(group.getBounds().pad(0.2));
+  }
+}
+
+// --- ОБНОВЯВАНЕ НА СТАТИСТИКАТА ---
+function updateStatistics(outbreaks) {
+  const total = outbreaks.length;
+  const high = outbreaks.filter(o =>
+    o.severity === 'висока' || o.severity === 'висок'
+  ).length;
+  const medium = outbreaks.filter(o =>
+    o.severity === 'средна' || o.severity === 'среден'
+  ).length;
+  const low = total - high - medium;
+
+  document.getElementById('total-outbreaks').textContent = total;
+  document.getElementById('high-severity').textContent = high;
+  document.getElementById('medium-severity').textContent = medium;
+  document.getElementById('low-severity').textContent = low;
+}
+
+// --- ОБНОВЯВАНЕ НА ТАБЛИЦАТА ---
+function updateTable(outbreaks) {
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+
+  outbreaks.forEach(outbreak => {
+    const row = document.createElement('tr');
+
+    let severityClass = 'severity-low';
+    if (outbreak.severity === 'средна' || outbreak.severity === 'среден') {
+      severityClass = 'severity-medium';
+    } else if (outbreak.severity === 'висока' || outbreak.severity === 'висок') {
+      severityClass = 'severity-high';
+    }
+
+    row.innerHTML = `
+      <td><strong>${outbreak.location || 'Неизвестна'}</strong></td>
+      <td>${outbreak.date || 'неизвестна'}</td>
+      <td class="${severityClass}">${outbreak.severity || 'ниска'}</td>
+      <td>${parseFloat(outbreak.lat).toFixed(4) || '?'}, ${parseFloat(outbreak.lng).toFixed(4) || '?'}</td>
+      <td>${outbreak.notes || ''}</td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+// --- СТАРТИРАНЕ ---
+document.addEventListener('DOMContentLoaded', function() {
+  initMap();
+
+  // Автоматично обновяване на всеки 30 минути
+  setInterval(() => {
+    loadDataWithFetch();
+  }, 30 * 60 * 1000);
+});
+</script>
+
+</body>
+</html>
