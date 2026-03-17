@@ -367,6 +367,65 @@ p, li, .article-content p, .image-caption {
 .color-chip.white { background: #F5F5F5; }
 .color-chip.black { background: #2F4F4F; }
 
+/* НОВ РАЗДЕЛ: СЕТ (СУМА НА ЕФЕКТИВНИТЕ ТЕМПЕРАТУРИ) */
+.set-container {
+  background: #f0f7f3;
+  border-radius: 24px;
+  padding: 20px;
+  margin: 10px 0 20px;
+  border: 1px solid #cbdcd0;
+}
+.set-description {
+  background: #e8f2ec;
+  border-radius: 18px;
+  padding: 18px;
+  margin: 20px 0;
+  border-left: 6px solid #1f7f5f;
+}
+.set-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.set-table th {
+  background: #1b4d3e;
+  color: white;
+  padding: 12px 10px;
+  text-align: left;
+}
+.set-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #d0e0d6;
+}
+.set-table tr:last-child td {
+  border-bottom: none;
+}
+.set-highlight {
+  background: #ffefdb;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  border-left: 6px solid #e07c2c;
+  font-weight: 500;
+}
+.set-iframe-container {
+  background: #ddeee5;
+  border-radius: 18px;
+  padding: 16px;
+  margin: 25px 0 10px;
+  text-align: center;
+}
+.set-iframe-container iframe {
+  max-width: 100%;
+  border: 2px solid #7fb095;
+  border-radius: 12px;
+  background: white;
+}
+
 /* ФОРМУЛЯР */
 .form-container { background: #f1f7f3; border-radius: 28px; padding: 20px; margin: 15px 0; border: 1px solid #cbdcd0; }
 .form-title { font-size: 1.4rem; color: #1b4d3e; margin-bottom: 10px; display: flex; gap: 8px; }
@@ -427,12 +486,13 @@ p, li, .article-content p, .image-caption {
 
 <div class="container">
 
-<!-- НАВИГАЦИЯ 5 ТАБА -->
+<!-- НАВИГАЦИЯ 6 ТАБА (вече 6, добавяме СЕТ) -->
 <div class="nav-tabs">
 <div class="nav-tab active" onclick="switchTab('determinant')">🔬 Определител</div>
 <div class="nav-tab" onclick="switchTab('article')">📘 Flavescence Dorée</div>
 <div class="nav-tab" onclick="switchTab('monitoring')">🪤 Мониторинг</div>
 <div class="nav-tab" onclick="switchTab('calendar')">📅 Календар</div>
+<div class="nav-tab" onclick="switchTab('set')">🌡️ СЕТ</div> <!-- НОВ ТАБ -->
 <div class="nav-tab" onclick="switchTab('report')">🚨 Сигнализирай</div>
 </div>
 
@@ -634,7 +694,50 @@ p, li, .article-content p, .image-caption {
 </div>
 </div></div></div>
 
-<!-- ========== СЕКЦИЯ 5: ФОРМУЛЯР ЗА СИГНАЛИЗИРАНЕ ========== -->
+<!-- ========== СЕКЦИЯ 5: СЕТ (СУМА НА ЕФЕКТИВНИТЕ ТЕМПЕРАТУРИ) ========== -->
+<div class="section" id="set">
+<div class="header-flex"><h1>🌡️ Метод СЕТ <span>Сума на Ефективните Температури</span></h1></div>
+<div class="set-container">
+
+<!-- Текст от tekst.txt форматиран -->
+<div class="set-description">
+  <h2>Описание на метода:</h2>
+  <p>Методът Сума на Ефективните Температури (СЕТ) е фитосанитарен подход за прогнозиране развитието на вредители чрез натрупване на температурни данни. Принципът се основава на факта, че насекомите развиват по-бързо при по-високи температури и по-бавно при по-ниски.</p>
+  
+  <h3>Изчисление:</h3>
+  <ul class="bullet-list">
+    <li>Използва се биологичен минимум (базова температура) — за Scaphoideus titanus това е 10°C</li>
+    <li>Всеки ден се изчислява ефективната температура: средна денонощна температура - 10°C</li>
+    <li>Ефективните температури се сумират ежедневно от началото на сезона</li>
+    <li>Когато сумата достигне критичен праг, вредителят навлиза в уязвима фаза</li>
+  </ul>
+</div>
+
+<h3>Приложение за Scaphoideus titanus</h3>
+<p>Scaphoideus titanus (американската лозена листна хърлева) е опасен вредител по лозата и вектор на флавесценс доре (жълтене на лозата).</p>
+
+<table class="set-table">
+  <tr><th>Параметър</th><th>Стойност</th></tr>
+  <tr><td>Базова температура</td><td>10°C</td></tr>
+  <tr><td>Праг за третиране</td><td>300–350 °C·дни</td></tr>
+  <tr><td>Фаза на уязвимост</td><td>Нимфи в ранни стадии</td></tr>
+  <tr><td>Период на приложение</td><td>Пролет/начало на лято</td></tr>
+</table>
+
+<div class="set-highlight">
+  <strong>Кога да се третира:</strong> Третирането е най-ефективно, когато натрупаната сума на ефективните температури достигне 300–350 °C·дни. В този момент нимфите са в най-чувствителната си фаза от развитието си и инсектицидната намеса дава най-добри резултати.
+</div>
+
+<!-- Изисканото iframe с надпис -->
+<div class="set-iframe-container">
+  <h4 style="margin-top:0; color:#1b4d3e;">📊 СЕТ за град Свищов</h4>
+  <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSb6_bao-gP3qpHh80Nl5cIpOy0g0IUTymx0kyjFEgsX0aKbFFxgZ2tYt2ujzKtTlZhl7Ht6AEgRWAJ/pubhtml?gid=1198650928&amp;single=true&amp;range=D1" width="200" height="50"></iframe>
+  <p style="font-size:0.8rem; margin:10px 0 0; color:#547a6a;">Текуща стойност на СЕТ (примерни данни)</p>
+</div>
+
+</div></div>
+
+<!-- ========== СЕКЦИЯ 6: ФОРМУЛЯР ЗА СИГНАЛИЗИРАНЕ ========== -->
 <div class="section" id="report">
 <div class="header-flex"><h1>🚨 Сигнализирай за огнище <span>БАБХ</span></h1></div>
 <div class="form-container" id="reportForm">
@@ -707,19 +810,16 @@ function updateStepCounter() { document.getElementById('stepCounter').innerText 
 function identify() { let c=0; if(answers[0]==='elongated')c+=10; if(answers[1]==='veins')c+=10; if(answers[2]==='spines')c+=15; if(answers[3]==='head_yellow')c+=8; if(answers[4]==='wings_two_spots')c+=12; if(answers[5]==='size_medium'||answers[5]==='size_large')c+=5; if(answers[6]==='legs_yellow')c+=5; if(answers[7]==='spines_many')c+=15; if(answers[8]==='head_triangular')c+=5; if(answers[9]==='location_lower'||answers[9]==='location_upper')c+=5; let txt=c>=70?'✓ Scaphoideus titanus '+c+'% увереност':c>=40?'⚠️ Вероятно S. titanus ('+c+'%)':'❓ Не може да се определи'; document.getElementById('resultText').innerText=txt; document.getElementById('result').classList.add('show'); }
 function restart(){ answers=[]; step=1; showStep(1); updateProgress(); updateStepCounter(); document.getElementById('result').classList.remove('show'); }
 
-// НАВИГАЦИЯ МЕЖДУ РАЗДЕЛИТЕ
+// НАВИГАЦИЯ МЕЖДУ РАЗДЕЛИТЕ (вече 6 таба)
 function switchTab(tabId) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
   // Актуализиране на активния таб
   const tabs = document.querySelectorAll('.nav-tab');
+  const tabIds = ['determinant', 'article', 'monitoring', 'calendar', 'set', 'report'];
   tabs.forEach((t, idx) => {
     t.classList.remove('active');
-    if ((tabId === 'determinant' && idx === 0) ||
-        (tabId === 'article' && idx === 1) ||
-        (tabId === 'monitoring' && idx === 2) ||
-        (tabId === 'calendar' && idx === 3) ||
-        (tabId === 'report' && idx === 4)) {
+    if (tabId === tabIds[idx]) {
       t.classList.add('active');
     }
   });
