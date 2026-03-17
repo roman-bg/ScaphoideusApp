@@ -302,15 +302,26 @@ let markers = [];
 let quarantineCircles = [];
 
 // --- ИНИЦИАЛИЗАЦИЯ НА КАРТАТА ---
+// --- ИНИЦИАЛИЗАЦИЯ НА КАРТАТА (коригирана) ---
 function initMap() {
-  map = L.map('outbreak-map').setView([42.7, 25.5], 8);
+  // Центрираме върху България с подходящ начален мащаб
+  map = L.map('outbreak-map', {
+    center: [42.7, 25.5],
+    zoom: 7,  // Начален мащаб (7 е подходящ за цялата страна)
+    minZoom: 6,  // Минимален мащаб (не позволява да се отдалечи твърде много)
+    maxZoom: 15, // Максимален мащаб (не позволява да приближи твърде много)
+    zoomControl: true,
+    fadeAnimation: true
+  });
 
+  // Добавяме OpenStreetMap слой
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    opacity: 0.9
   }).addTo(map);
 
-  // Зареждаме данните чрез fetch
+  // Зареждаме данните
   loadDataWithFetch();
 }
 
@@ -468,9 +479,27 @@ function updateMap(outbreaks) {
     markers.push(marker);
   });
 
+  // 📌 КОРИГИРАНО: Центрираме с ограничение на мащаба
   if (markers.length > 0) {
     const group = L.featureGroup(markers);
-    map.fitBounds(group.getBounds().pad(0.2));
+
+    // Изчисляваме границите с padding
+    const bounds = group.getBounds();
+
+    // Ако има само един маркер, задаваме ръчно мащаб
+    if (markers.length === 1) {
+      // Задаваме мащаб 10 (подходящ за област/град)
+      map.setView([outbreaks[0].lat, outbreaks[0].lng], 10);
+    } else {
+      // За много маркери, използваме bounds с максимален мащаб 12
+      map.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 12  // 🔥 Ограничаваме максималното приближаване
+      });
+    }
+  } else {
+    // Ако няма маркери, центрираме върху България с подходящ мащаб
+    map.setView([42.7, 25.5], 7);
   }
 }
 
