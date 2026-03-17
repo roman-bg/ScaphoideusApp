@@ -1,0 +1,271 @@
+<!-- ========== СЕКЦИЯ 5: СЕТ (СУМА НА ЕФЕКТИВНИТЕ ТЕМПЕРАТУРИ) ========== -->
+<div class="section" id="set">
+<div class="header-flex"><h1>🌡️ Метод СЕТ <span>Сума на Ефективните Температури</span></h1></div>
+<div class="set-container">
+
+<!-- Текст от tekst.txt форматиран -->
+<div class="set-description">
+  <h2>Описание на метода:</h2>
+  <p>Методът Сума на Ефективните Температури (СЕТ) е фитосанитарен подход за прогнозиране развитието на вредители чрез натрупване на температурни данни. Принципът се основава на факта, че насекомите развиват по-бързо при по-високи температури и по-бавно при по-ниски.</p>
+
+  <h3>Изчисление:</h3>
+  <ul class="bullet-list">
+    <li>Използва се биологичен минимум (базова температура) — за Scaphoideus titanus това е 10°C</li>
+    <li>Всеки ден се изчислява ефективната температура: средна денонощна температура - 10°C</li>
+    <li>Ефективните температури се сумират ежедневно от началото на сезона</li>
+    <li>Когато сумата достигне критичен праг, вредителят навлиза в уязвима фаза</li>
+  </ul>
+</div>
+
+<h3>Приложение за Scaphoideus titanus</h3>
+<p>Scaphoideus titanus (американската лозена листна хърлева) е опасен вредител по лозата и вектор на флавесценс доре (жълтене на лозата).</p>
+
+<table class="set-table">
+  <tr><th>Параметър</th><th>Стойност</th></tr>
+  <tr><td>Базова температура</td><td>10°C</td></tr>
+  <tr><td>Праг за третиране</td><td>300–350 °C·дни</td></tr>
+  <tr><td>Фаза на уязвимост</td><td>Нимфи в ранни стадии</td></tr>
+  <tr><td>Период на приложение</td><td>Пролет/начало на лято</td></tr>
+</table>
+
+<div class="set-highlight">
+  <strong>Кога да се третира:</strong> Третирането е най-ефективно, когато натрупаната сума на ефективните температури достигне 300–350 °C·дни. В този момент нимфите са в най-чувствителната си фаза от развитието си и инсектицидната намеса дава най-добри резултати.
+</div>
+
+<!-- ВИЗУАЛИЗАЦИЯ ЧРЕЗ API -->
+<div class="set-iframe-container" style="background: #ddeee5; border-radius: 18px; padding: 20px; margin: 25px 0 10px; text-align: center;">
+  <h4 style="margin-top:0; margin-bottom:15px; color:#1b4d3e;">📊 СЕТ за град Свищов</h4>
+
+  <!-- API визуализация на клетка D1 -->
+  <div id="set-cell-container" style="background: white; border-radius: 16px; padding: 25px 20px; border: 2px solid #7fb095; display: inline-block; min-width: 200px; box-shadow: 0 4px 12px rgba(0,40,20,0.1);">
+    <div style="font-size: 0.9rem; color: #547a6a; margin-bottom: 8px;">🌡️ Текуща стойност на СЕТ:</div>
+    <div id="set-cell-value" style="font-size: 3.2rem; font-weight: 700; color: #1b4d3e; line-height: 1.2;">⏳ Зареждане...</div>
+    <div style="font-size: 0.9rem; color: #547a6a; margin-top: 8px;">°C·дни (база 10°C)</div>
+  </div>
+
+  <div id="set-cell-update" style="font-size: 0.75rem; margin-top: 12px; color: #2a7b60; display: flex; align-items: center; justify-content: center; gap: 12px;">
+    <span id="set-cell-time">⏱️ обновяване...</span>
+    <button onclick="refreshSetCell()" style="background: transparent; border: 1px solid #2a7b60; color: #1e5743; border-radius: 30px; padding: 4px 12px; font-size: 0.7rem; cursor: pointer;">↻ опресни</button>
+  </div>
+
+  <p style="font-size:0.8rem; margin:15px 0 0; color:#547a6a;">Данните се обновяват автоматично от Google Sheets</p>
+</div>
+
+<!-- JavaScript за визуализация на клетка D1 -->
+<script>
+  // --- Google Sheets API конфигурация ---
+  const SHEET_API_KEY = 'AIzaSyDKurQN95lYPIRm4KRwaHrvezDesPJEYIw';
+  const SPREADSHEET_ID = '1Sb6_bao-gP3qpHh80Nl5cIpOy0g0IUTymx0kyjFEgsX0aKbFFxgZ2tYt2ujzKtTlZhl7Ht6AEgRWAJ';
+
+  // НЕКА ПЪРВО ОТКРИЕМ КАКВИ ЛИСТОВЕ ИМА
+  let sheetNames = [];
+  let selectedSheetName = 'DailyAverages'; // по подразбиране, но ще опитаме да открием
+
+  // Функция за получаване на списък с всички листове
+  async function getSheetNames() {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?key=${SHEET_API_KEY}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.error) {
+        console.error('❌ Грешка при получаване на листове:', data.error);
+        document.getElementById('api-test-result').innerHTML = `❌ Грешка: ${data.error.message}`;
+        return [];
+      }
+
+      // Извличане на имената на листовете
+      if (data.sheets && data.sheets.length > 0) {
+        sheetNames = data.sheets.map(sheet => sheet.properties.title);
+        console.log('📋 Намерени листове:', sheetNames);
+
+        // Показваме ги на потребителя
+        let sheetsList = sheetNames.map(name => `"${name}"`).join(', ');
+        document.getElementById('api-test-result').innerHTML = `✅ Намерени листове: ${sheetsList}`;
+
+        // Ако имаме листове, опитваме се да намерим подходящ
+        if (sheetNames.length > 0) {
+          // Първо търсим DailyAverages
+          if (sheetNames.includes('DailyAverages')) {
+            selectedSheetName = 'DailyAverages';
+            console.log('✅ Намерен лист DailyAverages');
+          }
+          // Ако няма DailyAverages, търсим лист с подобно име
+          else {
+            // Търсим лист, който съдържа "Average" или "Day"
+            const possibleSheet = sheetNames.find(name =>
+              name.toLowerCase().includes('average') ||
+              name.toLowerCase().includes('day') ||
+              name.toLowerCase().includes('set') ||
+              name.toLowerCase().includes('температура')
+            );
+
+            if (possibleSheet) {
+              selectedSheetName = possibleSheet;
+              console.log(`✅ Избран лист: ${selectedSheetName}`);
+            } else {
+              // Ако няма нищо подходящо, вземаме първия лист
+              selectedSheetName = sheetNames[0];
+              console.log(`✅ Избран първи лист: ${selectedSheetName}`);
+            }
+          }
+
+          // След като сме избрали лист, извличаме данните
+          fetchCellData(selectedSheetName);
+        }
+
+        return sheetNames;
+      } else {
+        document.getElementById('api-test-result').innerHTML = '❌ Няма намерени листове';
+        return [];
+      }
+
+    } catch (error) {
+      console.error('❌ Мрежова грешка:', error);
+      document.getElementById('api-test-result').innerHTML = '❌ Мрежова грешка';
+      return [];
+    }
+  }
+
+  // Функция за извличане на данни от клетката
+  async function fetchCellData(sheetName) {
+    if (!sheetName) {
+      console.log('⚠️ Няма избран лист');
+      return;
+    }
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${sheetName}!D1?key=${SHEET_API_KEY}`;
+
+    try {
+      console.log(`📡 Извличане на данни от лист "${sheetName}", клетка D1`);
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.error) {
+        console.error('❌ API грешка:', data.error);
+
+        if (data.error.code === 403) {
+          document.getElementById('set-cell-value').innerHTML = '🔒 Достъп отказан';
+        } else if (data.error.code === 404) {
+          document.getElementById('set-cell-value').innerHTML = '🔍 Листът не е намерен';
+        } else {
+          document.getElementById('set-cell-value').innerHTML = '❌ Грешка';
+        }
+
+        document.getElementById('set-cell-value').style.fontSize = '1.5rem';
+        document.getElementById('set-cell-value').style.color = '#c0392b';
+        return;
+      }
+
+      // Проверка дали има стойност в клетката
+      if (data.values && data.values.length > 0 && data.values[0].length > 0) {
+        let cellValue = data.values[0][0];
+        console.log('✅ Намерена стойност:', cellValue);
+
+        // Форматиране на стойността
+        if (!isNaN(parseFloat(cellValue)) && isFinite(cellValue)) {
+          cellValue = parseFloat(cellValue).toFixed(1);
+        }
+
+        document.getElementById('set-cell-value').innerHTML = cellValue;
+        document.getElementById('set-cell-value').style.color = '#1b4d3e';
+        document.getElementById('set-cell-value').style.fontSize = '3.2rem';
+
+        // Добавяме информация кой лист се използва
+        document.getElementById('set-cell-update').innerHTML =
+          `<span>📄 Лист: "${sheetName}"</span> | ${document.getElementById('set-cell-update').innerHTML}`;
+
+        // Цветова индикация спрямо прага
+        if (!isNaN(parseFloat(cellValue))) {
+          const numericValue = parseFloat(cellValue);
+
+          if (numericValue >= 300 && numericValue <= 350) {
+            document.getElementById('set-cell-container').style.borderColor = '#f0b429';
+            document.getElementById('set-cell-container').style.backgroundColor = '#fff9e6';
+          } else if (numericValue > 350) {
+            document.getElementById('set-cell-container').style.borderColor = '#c0392b';
+            document.getElementById('set-cell-container').style.backgroundColor = '#ffefdb';
+          } else {
+            document.getElementById('set-cell-container').style.borderColor = '#7fb095';
+            document.getElementById('set-cell-container').style.backgroundColor = 'white';
+          }
+        }
+
+      } else {
+        console.log('ℹ️ Клетката е празна');
+        document.getElementById('set-cell-value').innerHTML = '🫙 Празна';
+        document.getElementById('set-cell-value').style.fontSize = '2rem';
+      }
+
+      // Обновяване на времето
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('set-cell-time').innerHTML = `⏱️ последно: ${timeString} (лист: ${sheetName})`;
+
+    } catch (error) {
+      console.error('❌ Грешка при извличане:', error);
+      document.getElementById('set-cell-value').innerHTML = '⚠️ Грешка';
+      document.getElementById('set-cell-value').style.fontSize = '1.5rem';
+      document.getElementById('set-cell-value').style.color = '#c0392b';
+    }
+  }
+
+  // Функция за опресняване
+  function refreshSetCell() {
+    document.getElementById('set-cell-value').innerHTML = '⏳';
+    document.getElementById('set-cell-value').style.color = '#1b4d3e';
+    document.getElementById('set-cell-container').style.borderColor = '#7fb095';
+    document.getElementById('set-cell-container').style.backgroundColor = 'white';
+
+    if (selectedSheetName) {
+      fetchCellData(selectedSheetName);
+    } else {
+      getSheetNames();
+    }
+  }
+
+  // Функция за проверка на API
+  async function checkAPIStatus() {
+    document.getElementById('api-test-result').innerHTML = '⏳ Проверка...';
+    await getSheetNames();
+  }
+
+  // Стартиране при зареждане
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Страницата е заредена, стартиране на SET модула...');
+    // Първо откриваме листовете
+    setTimeout(getSheetNames, 1000);
+    // Обновяване на всеки 5 минути
+    setInterval(() => {
+      if (selectedSheetName) {
+        fetchCellData(selectedSheetName);
+      }
+    }, 300000);
+  });
+</script>
+
+<!-- Бутон за тестване -->
+<div style="text-align: center; margin: 20px 0; padding: 15px; background: #f0f7f3; border-radius: 16px;">
+  <button onclick="checkAPIStatus()" style="background: #1b4d3e; color: white; border: none; padding: 12px 24px; border-radius: 30px; cursor: pointer; font-weight: 600; font-size: 1rem;">
+    🔍 Открий листовете в таблицата
+  </button>
+  <div id="api-test-result" style="margin-top: 15px; font-size: 1rem; padding: 12px; background: white; border-radius: 12px; min-height: 50px;">
+    ⏳ Натиснете бутона, за да видите какви листове има
+  </div>
+</div>
+
+<!-- Информация -->
+<div style="margin-top: 10px; padding: 15px; background: #ecf6f0; border-radius: 16px;">
+  <p style="font-size:0.9rem; color:#1b4d3e; font-weight:600;">📋 Какво прави този код:</p>
+  <ol style="text-align: left; font-size:0.85rem; color:#2a7b60;">
+    <li>Първо открива всички листове в таблицата</li>
+    <li>Търси лист с име "DailyAverages"</li>
+    <li>Ако няма такъв, избира най-подходящия лист</li>
+    <li>Визуализира клетка D1 от избрания лист</li>
+    <li>Показва точно кой лист се използва</li>
+  </ol>
+</div>
+
+</div></div>
