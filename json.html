@@ -1,49 +1,329 @@
 <!DOCTYPE html>
-<html>
+<html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <title>Температури</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сума на ефективни температури</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #1e3c72;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            background: linear-gradient(145deg, #3494e6, #2a5298);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 25px;
+            font-size: 12px;
+            display: inline-block;
+            letter-spacing: 1px;
+        }
+
+        .temperature-container {
+            background: linear-gradient(145deg, #3494e6, #2a5298);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 15px 30px rgba(52, 148, 230, 0.3);
+        }
+
+        .temperature-label {
+            font-size: 14px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .temperature-value {
+            font-size: 80px;
+            font-weight: 800;
+            line-height: 1;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .temperature-unit {
+            font-size: 24px;
+            opacity: 0.9;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .info-item {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #1e3c72;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .timestamp {
+            background: #1e3c72;
+            color: white;
+            padding: 18px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 14px;
+            margin: 25px 0;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(145deg, #3494e6, #2a5298);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(52, 148, 230, 0.4);
+        }
+
+        .proxy-badge {
+            font-size: 10px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .success-message {
+            background: #10b981;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-    <h2>Сума на ефективни температури</h2>
-    <div id="data">Зареждане...</div>
+    <div class="card">
+        <div class="header">
+            <h1>🌡 Ефективни температури</h1>
+            <span class="badge">⚡ на живо от сензорите</span>
+        </div>
+
+        <div id="loading" style="text-align: center; padding: 40px;">
+            <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3494e6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+            <p>Зареждане на данни...</p>
+        </div>
+
+        <div id="error" style="display: none; background: #fee; color: #c33; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;"></div>
+
+        <div id="content" style="display: none;">
+            <div class="temperature-container">
+                <div class="temperature-label">Сума на ефективни температури</div>
+                <div class="temperature-value">
+                    <span id="sum-value">0</span><span class="temperature-unit" id="unit">°C</span>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon">🎯</div>
+                    <div class="info-label">Базова температура</div>
+                    <div class="info-value" id="base-temp">10°C</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">📡</div>
+                    <div class="info-label">Прокси</div>
+                    <div class="info-value" id="proxy-status">✓ активно</div>
+                </div>
+            </div>
+
+            <div class="timestamp" id="timestamp">
+                Зареждане на време...
+            </div>
+
+            <button class="refresh-btn" onclick="loadData(true)">
+                <span>🔄</span> Обнови данните
+            </button>
+
+            <div class="success-message" id="successMsg">
+                ✅ Данните са обновени успешно
+            </div>
+
+            <div class="proxy-badge">
+                🔧 прокси: api.codetabs.com
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 
     <script>
         const API_URL = 'http://87.254.182.122/effective_temperature_sum.json';
-        
-        // Списък с работещи CORS проксита
-        const proxies = [
-            'https://corsproxy.io/?',
-            'https://proxy.cors.sh/',
-            'https://cors-anywhere.herokuapp.com/'
-        ];
-        
-        async function tryProxies() {
-            for (let proxy of proxies) {
-                try {
-                    document.getElementById('data').innerHTML = `Опит с ${proxy}...`;
-                    
-                    const response = await fetch(proxy + API_URL + '?t=' + Date.now());
-                    
-                    if (!response.ok) continue;
-                    
-                    const data = await response.json();
-                    
-                    document.getElementById('data').innerHTML = `
-                        <div style="font-size: 48px;">${data.effective_temperature_sum}°C</div>
-                        <div>${data.timestamp}</div>
-                        <div>Базова температура: ${data.base_temperature}°C</div>
-                    `;
-                    return;
-                } catch (e) {
-                    console.log(proxy + ' не работи');
-                }
-            }
+        const PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+
+        async function loadData(showSuccessMsg = false) {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            const error = document.getElementById('error');
+            const successMsg = document.getElementById('successMsg');
             
-            document.getElementById('data').innerHTML = 'Всички проксита не работят. Опитайте по-късно.';
+            loading.style.display = 'block';
+            content.style.display = 'none';
+            error.style.display = 'none';
+            
+            try {
+                const url = PROXY + encodeURIComponent(API_URL + '?t=' + Date.now());
+                console.log('Зареждане от:', url);
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP грешка ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Валидация
+                if (!data || typeof data.effective_temperature_sum === 'undefined') {
+                    throw new Error('Невалидни данни от сървъра');
+                }
+                
+                // Обновяване на стойностите
+                document.getElementById('sum-value').textContent = 
+                    parseFloat(data.effective_temperature_sum).toFixed(2);
+                document.getElementById('unit').textContent = data.unit || '°C';
+                document.getElementById('base-temp').textContent = 
+                    parseFloat(data.base_temperature).toFixed(1) + '°C';
+                document.getElementById('timestamp').innerHTML = `
+                    🕐 Последно измерване: ${formatDate(data.timestamp)}
+                `;
+                
+                // Скриваме loading, показваме content
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                
+                // Показваме success съобщение при ръчно обновяване
+                if (showSuccessMsg) {
+                    successMsg.style.display = 'block';
+                    setTimeout(() => {
+                        successMsg.style.display = 'none';
+                    }, 3000);
+                }
+                
+            } catch (err) {
+                console.error('Грешка:', err);
+                
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.innerHTML = `
+                    <strong>❌ Грешка</strong><br>
+                    ${err.message}<br>
+                    <small style="display: block; margin-top: 10px;">Проксито работи, но сървърът не отговаря</small>
+                `;
+            }
         }
+
+        function formatDate(timestamp) {
+            try {
+                const date = new Date(timestamp);
+                if (isNaN(date.getTime())) return timestamp;
+                
+                return date.toLocaleString('bg-BG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            } catch (e) {
+                return timestamp;
+            }
+        }
+
+        // Зареждане при стартиране
+        loadData(false);
         
-        tryProxies();
+        // Автоматично обновяване на всеки 30 секунди
+        setInterval(() => loadData(false), 30000);
     </script>
 </body>
 </html>
