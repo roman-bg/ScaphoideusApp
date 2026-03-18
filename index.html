@@ -458,7 +458,7 @@ p, li, .article-content p, .image-caption {
 .contact-text { color: #1e5743; font-weight: 500; }
 .emergency-note { background: #ffefdb; border-radius: 16px; padding: 14px; margin-top: 16px; font-weight: 600; color: #d45d1a; display: flex; gap: 12px; }
 
-/* FOOTER - нов стил за надписа */
+/* FOOTER */
 .footer-note {
   text-align: center;
   margin-top: 30px;
@@ -747,45 +747,72 @@ p, li, .article-content p, .image-caption {
   <strong>Кога да се третира:</strong> Третирането е най-ефективно, когато натрупаната сума на ефективните температури достигне 300–350 °C·дни. В този момент нимфите са в най-чувствителната си фаза от развитието си и инсектицидната намеса дава най-добри резултати.
 </div>
 
-<!-- ПРОСТА И ГАРАНТИРАНА ВИЗУАЛИЗАЦИЯ - без надпис за обновяване -->
+<!-- ВИЗУАЛИЗАЦИЯ С CORS ПРОКСИ (api.codetabs.com) -->
 <div class="set-iframe-container" style="background: #ddeee5; border-radius: 18px; padding: 20px; margin: 25px 0 10px;">
   <h4 style="margin-top:0; margin-bottom:20px; color:#1b4d3e; text-align: center;">📊 СЕТ за град Свищов</h4>
-
+  
   <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
-
+    
+    <!-- Карта за състоянието на връзката -->
+    <div style="width: 100%; max-width: 400px; margin-bottom: 15px;" id="set-status">
+      <div style="background: #ecf6f0; border-radius: 30px; padding: 8px 15px; text-align: center; font-size: 0.85rem; color: #1b4d3e;">
+        <span id="connection-status">🔄 Свързване със сензорите...</span>
+      </div>
+    </div>
+    
     <!-- Контейнер за стойността -->
     <div style="background: white; border-radius: 20px; padding: 25px 30px; border: 3px solid #1b4d3e; max-width: 350px; width: 100%; box-shadow: 0 8px 20px rgba(0,40,20,0.15);">
-
-      <!-- Място за числото от Google Sheets -->
+      
+      <!-- Място за числото от сензорите -->
       <div style="text-align: center;">
         <div style="font-size: 1rem; color: #1b4d3e; margin-bottom: 15px; font-weight: 600; letter-spacing: 0.5px;">
           ⏳ Текуща натрупана температура:
         </div>
-
-        <!-- IFrame само за клетка D1 - опростен и работещ -->
-        <div style="background: #f8f9fa; border-radius: 12px; padding: 15px 10px; border: 1px solid #cbdcd0;">
-          <iframe
-            src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSb6_bao-gP3qpHh80Nl5cIpOy0g0IUTymx0kyjFEgsX0aKbFFxgZ2tYt2ujzKtTlZhl7Ht6AEgRWAJ/pubhtml?gid=1198650928&single=true&range=D1&widget=false&chrome=false"
-            style="border: none; width: 100%; height: 60px; background: transparent;"
-            frameborder="0"
-            scrolling="no">
-          </iframe>
+        
+        <!-- Голямото число -->
+        <div style="font-size: 3.5rem; font-weight: 800; color: #1b4d3e; line-height: 1.2;" id="set-value">
+          ---
         </div>
-
+        
         <!-- Единица мярка -->
-        <div style="font-size: 1.2rem; font-weight: 600; color: #1b4d3e; margin-top: 15px;">
+        <div style="font-size: 1.2rem; font-weight: 600; color: #1b4d3e; margin-top: 10px;" id="set-unit">
           °C·дни
         </div>
-        <div style="font-size: 0.85rem; color: #547a6a; margin-top: 5px;">
-          (базова температура 10°C)
+        
+        <!-- Таймстамп -->
+        <div style="font-size: 0.8rem; color: #547a6a; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbdcd0;" id="set-timestamp">
+          зареждане...
         </div>
+        
+        <!-- Прогрес бар до прага -->
+        <div style="margin-top: 20px;" id="progress-container">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #547a6a; margin-bottom: 5px;">
+            <span>0°C</span>
+            <span>Праг 300°C</span>
+          </div>
+          <div style="background: #dbd2c6; border-radius: 10px; height: 12px; overflow: hidden;">
+            <div id="progress-bar" style="background: #1f7f5f; height: 100%; width: 0%; border-radius: 10px;"></div>
+          </div>
+        </div>
+        
+        <!-- Индикация за праг -->
+        <div id="threshold-warning" style="margin-top: 15px; font-size: 0.9rem; font-weight: 600; padding: 8px; border-radius: 30px; display: none;">
+        </div>
+        
       </div>
-
     </div>
-
+    
+    <!-- Бутон за ръчно обновяване -->
+    <div style="margin-top: 20px; text-align: center;">
+      <button onclick="loadSetData(true)" style="background: #1b4d3e; color: white; border: none; padding: 8px 25px; border-radius: 30px; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <span>🔄</span> Обнови
+      </button>
+      <div style="font-size: 0.7rem; color: #888; margin-top: 8px;">
+        автоматично обновяване на всеки 5 мин
+      </div>
+    </div>
   </div>
 </div>
-
 </div></div>
 
 <!-- ========== СЕКЦИЯ 6: ФОРМУЛЯР ЗА СИГНАЛИЗИРАНЕ ========== -->
@@ -873,6 +900,11 @@ function switchTab(tabId) {
       t.classList.add('active');
     }
   });
+  
+  // Ако отваряме СЕТ раздела, зареждаме данните
+  if (tabId === 'set') {
+    loadSetData(false);
+  }
 }
 
 // МАРКЕРИ (симулация)
@@ -902,6 +934,167 @@ function generatePDF() { alert('PDF генериран (демо версия). 
 function clearForm() { if(confirm('Изчистване на формата?')) location.reload(); }
 function handleFiles(files) { console.log('Files selected:', files.length); }
 window.getCurrentLocation = function(){ alert('Геолокацията е симулирана'); }
+
+// ========== СЕТ ФУНКЦИИ ==========
+// Конфигурация за СЕТ данните
+const SET_API_URL = 'http://87.254.182.122/effective_temperature_sum.json';
+const SET_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+
+// Функция за зареждане на СЕТ данни
+async function loadSetData(showMessage = false) {
+  const statusEl = document.getElementById('connection-status');
+  const valueEl = document.getElementById('set-value');
+  const unitEl = document.getElementById('set-unit');
+  const timestampEl = document.getElementById('set-timestamp');
+  const progressBar = document.getElementById('progress-bar');
+  const warningEl = document.getElementById('threshold-warning');
+  
+  // Проверка дали елементите съществуват (за безопасност)
+  if (!statusEl || !valueEl) return;
+  
+  try {
+    statusEl.innerHTML = '🔄 Свързване със сензорите...';
+    statusEl.style.color = '#1b4d3e';
+    
+    const url = SET_PROXY + encodeURIComponent(SET_API_URL + '?t=' + Date.now());
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Валидация
+    if (!data || typeof data.effective_temperature_sum === 'undefined') {
+      throw new Error('Невалидни данни');
+    }
+    
+    // Вземаме стойността
+    const sum = parseFloat(data.effective_temperature_sum).toFixed(1);
+    const baseTemp = parseFloat(data.base_temperature).toFixed(0);
+    const unit = data.unit || '°C';
+    const timestamp = data.timestamp || 'няма информация';
+    
+    // Обновяваме UI
+    valueEl.textContent = sum;
+    unitEl.innerHTML = `${unit}·дни (база ${baseTemp}°C)`;
+    
+    // Форматираме timestamp
+    let displayTime = timestamp;
+    try {
+      const date = new Date(timestamp);
+      if (!isNaN(date.getTime())) {
+        displayTime = date.toLocaleString('bg-BG', {
+          day: 'numeric', month: 'numeric', 
+          hour: '2-digit', minute: '2-digit'
+        });
+      }
+    } catch (e) {}
+    
+    timestampEl.innerHTML = `🕐 последно измерване: ${displayTime}`;
+    
+    // Изчисляваме прогрес до прага (300°C)
+    const sumNum = parseFloat(sum);
+    const threshold = 300;
+    let percent = (sumNum / threshold) * 100;
+    if (percent > 100) percent = 100;
+    if (progressBar) progressBar.style.width = percent + '%';
+    
+    // Проверка за праг
+    if (warningEl) {
+      if (sumNum >= threshold) {
+        warningEl.style.display = 'block';
+        warningEl.style.background = '#ffefdb';
+        warningEl.style.color = '#e07c2c';
+        warningEl.innerHTML = '⚠️ Достигнат е прагът за третиране!';
+      } else {
+        warningEl.style.display = 'none';
+      }
+    }
+    
+    // Обновяваме статуса
+    statusEl.innerHTML = '✅ Връзката със сензорите е активна';
+    statusEl.style.color = '#1f7f5f';
+    
+    // Ако е ръчно обновяване, показваме съобщение
+    if (showMessage) {
+      const msgDiv = document.createElement('div');
+      msgDiv.textContent = '✓ Данните са обновени';
+      msgDiv.style.cssText = `
+        background: #1f7f5f; color: white; padding: 8px 16px; 
+        border-radius: 30px; font-size: 0.85rem; margin-top: 10px;
+        animation: fadeOut 3s forwards;
+      `;
+      document.getElementById('set-status').appendChild(msgDiv);
+      setTimeout(() => msgDiv.remove(), 3000);
+    }
+    
+  } catch (error) {
+    console.error('SET грешка:', error);
+    if (valueEl) valueEl.textContent = '---';
+    if (statusEl) {
+      statusEl.innerHTML = '❌ Няма връзка със сензорите';
+      statusEl.style.color = '#c0392b';
+    }
+    if (timestampEl) timestampEl.innerHTML = 'грешка при зареждане';
+    
+    // Опит с резервно прокси ако основното не работи
+    if (error.message.includes('Failed to fetch')) {
+      tryBackupProxy();
+    }
+  }
+}
+
+// Резервно прокси
+async function tryBackupProxy() {
+  const backupProxies = [
+    'https://corsproxy.io/?',
+    'https://proxy.cors.sh/'
+  ];
+  
+  for (let proxy of backupProxies) {
+    try {
+      const url = proxy + encodeURIComponent(SET_API_URL + '?t=' + Date.now());
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        document.getElementById('set-value').textContent = 
+          parseFloat(data.effective_temperature_sum).toFixed(1);
+        document.getElementById('connection-status').innerHTML = '✅ Активно (резервно прокси)';
+        break;
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+}
+
+// Анимация за fadeOut
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeOut {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
+// Зареждане на данните при стартиране
+document.addEventListener('DOMContentLoaded', () => {
+  // Ако раздел СЕТ е активен, зареди веднага
+  if (document.getElementById('set').classList.contains('active')) {
+    loadSetData(false);
+  }
+  
+  // Автоматично обновяване на всеки 5 минути
+  setInterval(() => {
+    if (document.getElementById('set').classList.contains('active')) {
+      loadSetData(false);
+    }
+  }, 300000); // 5 минути
+});
 
 // СТАРТ
 updateStepCounter();
