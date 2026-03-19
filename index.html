@@ -583,7 +583,16 @@ p, li, .article-content p, .image-caption {
 </div>
 
 <!-- Линк към картата на огнищата -->
-
+<div style="text-align: center; margin: 30px 0 10px;">
+  <a href="map.html" target="_blank" style="display: inline-flex; align-items: center; gap: 12px; background: #c0392b; color: white; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; font-size: 1.1rem; border: 2px solid #a03226; transition: all 0.2s ease; box-shadow: 0 6px 15px rgba(192, 57, 43, 0.3);">
+    <span style="font-size: 1.8rem;">🗺️</span>
+    <span>Карта на регистрираните огнища</span>
+    <span style="font-size: 1.2rem;">→</span>
+  </a>
+  <p style="margin-top: 12px; color: #547a6a; font-size: 0.9rem;">
+    Актуални данни за огнища на Flavescence Dorée в България
+  </p>
+</div>
 
 <style>
   /* Hover ефект за бутона */
@@ -737,28 +746,73 @@ p, li, .article-content p, .image-caption {
 <div class="set-highlight">
   <strong>Кога да се третира:</strong> Третирането е най-ефективно, когато натрупаната сума на ефективните температури достигне 300–350 °C·дни. В този момент нимфите са в най-чувствителната си фаза от развитието си и инсектицидната намеса дава най-добри резултати.
 </div>
-<div style="text-align: center; margin: 30px 0 10px;">
-  <a href="map.html" target="_blank" style="display: inline-flex; align-items: center; gap: 12px; background: #c0392b; color: white; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; font-size: 1.1rem; border: 2px solid #a03226; transition: all 0.2s ease; box-shadow: 0 6px 15px rgba(192, 57, 43, 0.3);">
-    <span style="font-size: 1.8rem;">🗺️</span>
-    <span>Карта на регистрираните огнища</span>
-    <span style="font-size: 1.2rem;">→</span>
-  </a>
-  <p style="margin-top: 12px; color: #547a6a; font-size: 0.9rem;">
-    Актуални данни за огнища на Flavescence Dorée в България
-  </p>
-</div>
 
 <!-- ВИЗУАЛИЗАЦИЯ С CORS ПРОКСИ (api.codetabs.com) -->
+<div class="set-iframe-container" style="background: #ddeee5; border-radius: 18px; padding: 20px; margin: 25px 0 10px;">
+  <h4 style="margin-top:0; margin-bottom:20px; color:#1b4d3e; text-align: center;">📊 СЕТ за град Свищов</h4>
 
+  <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+
+    <!-- Карта за състоянието на връзката -->
+    <div style="width: 100%; max-width: 400px; margin-bottom: 15px;" id="set-status">
+      <div style="background: #ecf6f0; border-radius: 30px; padding: 8px 15px; text-align: center; font-size: 0.85rem; color: #1b4d3e;">
+        <span id="connection-status">🔄 Свързване със сензорите...</span>
+      </div>
+    </div>
 
     <!-- Контейнер за стойността -->
+    <div style="background: white; border-radius: 20px; padding: 25px 30px; border: 3px solid #1b4d3e; max-width: 350px; width: 100%; box-shadow: 0 8px 20px rgba(0,40,20,0.15);">
 
+      <!-- Място за числото от сензорите -->
+      <div style="text-align: center;">
+        <div style="font-size: 1rem; color: #1b4d3e; margin-bottom: 15px; font-weight: 600; letter-spacing: 0.5px;">
+          ⏳ Текуща натрупана температура:
+        </div>
+
+        <!-- Голямото число -->
+        <div style="font-size: 3.5rem; font-weight: 800; color: #1b4d3e; line-height: 1.2;" id="set-value">
+          ---
+        </div>
+
+        <!-- Единица мярка -->
+        <div style="font-size: 1.2rem; font-weight: 600; color: #1b4d3e; margin-top: 10px;" id="set-unit">
+          °C·дни
+        </div>
+
+        <!-- Таймстамп -->
+        <div style="font-size: 0.8rem; color: #547a6a; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbdcd0;" id="set-timestamp">
+          зареждане...
+        </div>
+
+        <!-- Прогрес бар до прага -->
+        <div style="margin-top: 20px;" id="progress-container">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #547a6a; margin-bottom: 5px;">
+            <span>0°C</span>
+            <span>Праг 300°C</span>
+          </div>
+          <div style="background: #dbd2c6; border-radius: 10px; height: 12px; overflow: hidden;">
+            <div id="progress-bar" style="background: #1f7f5f; height: 100%; width: 0%; border-radius: 10px;"></div>
+          </div>
+        </div>
+
+        <!-- Индикация за праг -->
+        <div id="threshold-warning" style="margin-top: 15px; font-size: 0.9rem; font-weight: 600; padding: 8px; border-radius: 30px; display: none;">
+        </div>
 
       </div>
     </div>
 
     <!-- Бутон за ръчно обновяване -->
-
+    <div style="margin-top: 20px; text-align: center;">
+      <button onclick="loadSetData(true)" style="background: #1b4d3e; color: white; border: none; padding: 8px 25px; border-radius: 30px; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <span>🔄</span> Обнови
+      </button>
+      <div style="font-size: 0.7rem; color: #888; margin-top: 8px;">
+        автоматично обновяване на всеки 5 мин
+      </div>
+    </div>
+  </div>
+</div>
 </div></div>
 
 <!-- ========== СЕКЦИЯ 6: ФОРМУЛЯР ЗА СИГНАЛИЗИРАНЕ ========== -->
