@@ -38,7 +38,6 @@
             flex-direction: column;
         }
 
-        /* Мобилно заглавие */
         .title-wrapper {
             display: flex;
             align-items: center;
@@ -84,7 +83,6 @@
             font-weight: 500;
         }
 
-        /* Легенда - хоризонтален скрол на мобилно */
         .legend {
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(10px);
@@ -133,7 +131,6 @@
             border: 2px solid #e07c2c;
         }
 
-        /* Картата заема по-голяма част */
         .map-container {
             position: relative;
             width: 100%;
@@ -152,7 +149,6 @@
             z-index: 1;
         }
 
-        /* Инфо карта - опростена за мобилно */
         .info-card {
             background: linear-gradient(135deg, #f0f7f3 0%, #e8f2ec 100%);
             border-radius: 20px;
@@ -218,7 +214,6 @@
             margin-left: 3px;
         }
 
-        /* Статус и бутон в редица */
         .action-row {
             display: flex;
             align-items: center;
@@ -286,7 +281,6 @@
             font-weight: 500;
         }
 
-        /* Мобилен popup */
         .custom-popup {
             border-radius: 16px;
             overflow: hidden;
@@ -310,7 +304,6 @@
             border: 1px solid #9bc5b4 !important;
         }
 
-        /* Стил за временно съобщение */
         .toast-message {
             background: linear-gradient(135deg, #1f7f5f, #1b4d3e);
             color: white;
@@ -343,19 +336,17 @@
             to { opacity: 0; transform: scale(0.9); }
         }
 
-        /* Дребни корекции */
         .center-label {
-            display: none; /* Скриваме на мобилно, за да не пречи */
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Заглавие - по-компактно -->
         <div class="title-wrapper">
             <img src="sitelogo.jpg" alt="Лого" class="site-logo" onerror="this.style.display='none'">
             <h1>
-                СЕТ в карантинна зона 
+                СЕТ в карантинна зона
                 <span>Сума на ефективните температури</span>
             </h1>
         </div>
@@ -364,7 +355,6 @@
             📍 Свищов (43.62°N, 25.35°E) • Радиус 2.5 км
         </div>
 
-        <!-- Легенда с хоризонтален скрол -->
         <div class="legend">
             <div class="legend-item">
                 <div class="legend-color point"></div>
@@ -379,26 +369,24 @@
             </div>
         </div>
 
-        <!-- Карта -->
         <div class="map-container">
             <div id="map"></div>
         </div>
 
-        <!-- Информационен панел - опростен за мобилно -->
         <div class="info-card">
             <div class="info-row">
                 <div class="info-icon">🌡️</div>
                 <div class="info-content">
-                    <span class="info-label">СЕТ в огнището</span>
+                    <span class="info-label">СЕТ стойност</span>
                     <span class="info-value" id="setValue">--- <small>°C·дни</small></span>
                 </div>
             </div>
 
             <div class="info-row">
-                <div class="info-icon">🕐</div>
+                <div class="info-icon">📅</div>
                 <div class="info-content">
-                    <span class="info-label">Последно наблюдение</span>
-                    <span class="info-value" id="lastUpdated">---</span>
+                    <span class="info-label">Дата</span>
+                    <span class="info-value" id="measurementDate">---</span>
                 </div>
             </div>
 
@@ -419,35 +407,36 @@
         </div>
     </div>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // Конфигурация
         const CENTER_LAT = 43.571194;
         const CENTER_LNG = 25.310833;
         const RADIUS_KM = 2.5;
-        const SUMMARY_URL = 'http://87.254.182.122/summary.json';
-        const PROXY_URL = 'https://api.codetabs.com/v1/proxy?quest=';
+        const DATA_URL = 'https://app.coupler.io/export/w/c7881644-6a10-480b-90e0-294a4068cf85.json?access_token=107e4f8e4da1c85a796819e244a7fbba3d3e165645df419ace8f06319491';
+        
+        const PROXY_OPTIONS = [
+            'https://api.codetabs.com/v1/proxy?quest=',
+            'https://cors-anywhere.herokuapp.com/',
+            'https://proxy.cors.sh/',
+            'https://cors-proxy.htmldriven.com/?url='
+        ];
 
-        // Глобални променливи
         let map, marker, circle;
         let autoRefreshInterval;
 
         function initMap() {
             map = L.map('map', {
-                zoomControl: false, // премахваме големия контрол за мобилно
-                attributionControl: false // пестим място
+                zoomControl: false,
+                attributionControl: false
             }).setView([CENTER_LAT, CENTER_LNG], 12);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19
             }).addTo(map);
 
-            // Малък контрол за мащаб долу вдясно
             L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-            // Маркер за огнището
             marker = L.marker([CENTER_LAT, CENTER_LNG], {
                 icon: L.divIcon({
                     className: 'custom-marker',
@@ -458,7 +447,6 @@
                 })
             }).addTo(map);
 
-            // Карантинна зона
             circle = L.circle([CENTER_LAT, CENTER_LNG], {
                 color: '#e07c2c',
                 weight: 3,
@@ -472,8 +460,103 @@
                 closeButton: false
             });
 
-            // Зареждаме данни
             loadSetData(false);
+        }
+
+        function extractData(data) {
+            if (Array.isArray(data) && data.length > 0) {
+                const firstItem = data[0];
+                
+                if (firstItem && 'Date' in firstItem && 'DD' in firstItem) {
+                    const sortedData = [...data].sort((a, b) => {
+                        try {
+                            const [aDay, aMonth, aYear] = a.Date.split('.');
+                            const [bDay, bMonth, bYear] = b.Date.split('.');
+                            const dateA = new Date(aYear, aMonth - 1, aDay);
+                            const dateB = new Date(bYear, bMonth - 1, bDay);
+                            return dateA - dateB;
+                        } catch (e) {
+                            return 0;
+                        }
+                    });
+                    
+                    const lastRecord = sortedData[sortedData.length - 1];
+                    return {
+                        value: lastRecord.DD,
+                        date: lastRecord.Date
+                    };
+                }
+            }
+            
+            else if (data && typeof data === 'object' && 'total_sum' in data) {
+                return {
+                    value: parseFloat(data.total_sum),
+                    date: data.last_updated ? data.last_updated.split(' ')[0] : '---'
+                };
+            }
+            
+            return null;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === '---') return '---';
+            try {
+                if (dateStr.includes(' ')) {
+                    dateStr = dateStr.split(' ')[0];
+                }
+                
+                if (dateStr.includes('-')) {
+                    const [year, month, day] = dateStr.split('-');
+                    const date = new Date(year, month - 1, day);
+                    return date.toLocaleDateString('bg-BG', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                }
+                else if (dateStr.includes('.')) {
+                    const [day, month, year] = dateStr.split('.');
+                    const date = new Date(year, month - 1, day);
+                    return date.toLocaleDateString('bg-BG', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                }
+                return dateStr;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        async function fetchWithProxy(url, proxyIndex = 0) {
+            if (proxyIndex >= PROXY_OPTIONS.length) {
+                throw new Error('Всички проксита са изчерпани');
+            }
+
+            const proxy = PROXY_OPTIONS[proxyIndex];
+            const cacheBuster = '?t=' + Date.now();
+            const fullUrl = url.includes('?') ? url + '&' + cacheBuster.substring(1) : url + cacheBuster;
+            const proxyUrl = proxy + encodeURIComponent(fullUrl);
+            
+            try {
+                const response = await fetch(proxyUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const text = await response.text();
+                
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Невалиден JSON формат');
+                }
+                
+            } catch (error) {
+                return fetchWithProxy(url, proxyIndex + 1);
+            }
         }
 
         async function loadSetData(showMessage = false) {
@@ -481,42 +564,26 @@
             const statusIcon = document.getElementById('statusIcon');
             const statusText = document.getElementById('statusText');
             const setValueEl = document.getElementById('setValue');
-            const lastUpdatedEl = document.getElementById('lastUpdated');
+            const measurementDateEl = document.getElementById('measurementDate');
 
             try {
                 statusEl.className = 'status-badge';
                 statusIcon.textContent = '🔄';
                 statusText.textContent = 'Свързване...';
-
-                const url = PROXY_URL + encodeURIComponent(SUMMARY_URL + '?t=' + Date.now());
-                const response = await fetch(url);
-
-                if (!response.ok) throw new Error(`Грешка ${response.status}`);
                 
-                const data = await response.json();
-
-                if (typeof data.total_sum === 'undefined' || typeof data.last_updated === 'undefined') {
-                    throw new Error('Невалидни данни');
+                const data = await fetchWithProxy(DATA_URL);
+                const extracted = extractData(data);
+                
+                if (!extracted) {
+                    throw new Error('Неразпознат формат на данните');
                 }
 
-                const totalSum = parseFloat(data.total_sum).toFixed(1);
-                const lastUpdated = data.last_updated;
+                const value = extracted.value;
+                const date = extracted.date;
 
-                // Форматиране на дата
-                let formattedDate = lastUpdated;
-                try {
-                    const date = new Date(lastUpdated.replace(' ', 'T'));
-                    if (!isNaN(date.getTime())) {
-                        formattedDate = date.toLocaleString('bg-BG', {
-                            day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit'
-                        });
-                    }
-                } catch (e) {}
+                setValueEl.innerHTML = `${value.toFixed(1)} <small>°C·дни</small>`;
+                measurementDateEl.textContent = formatDate(date);
 
-                setValueEl.innerHTML = `${totalSum} <small>°C·дни</small>`;
-                lastUpdatedEl.textContent = formattedDate;
-
-                // Popup съдържание - опростено за мобилно
                 const popupContent = `
                     <div style="min-width: 180px; padding: 5px;">
                         <div style="font-weight:700; color:#1b4d3e; border-bottom:2px solid #9bc5b4; padding-bottom:6px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
@@ -526,14 +593,15 @@
                         <div style="background:#f0f7f3; padding:8px 10px; border-radius:20px; margin-bottom:5px;">
                             <div style="display:flex; justify-content:space-between;">
                                 <span style="color:#1b4d3e;">🌡️ Стойност:</span>
-                                <span style="font-weight:700; color:#1b4d3e;">${totalSum} °C·дни</span>
+                                <span style="font-weight:700; color:#1b4d3e;">${value.toFixed(1)} °C·дни</span>
                             </div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-top:5px;">
-                                <span style="color:#547a6a;">🕐 ${formattedDate}</span>
+                            <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                                <span style="color:#547a6a;">📅 Дата:</span>
+                                <span style="font-weight:500; color:#1b4d3e;">${formatDate(date)}</span>
                             </div>
                         </div>
                         <div style="font-size:0.65rem; color:#547a6a; text-align:center; border-top:1px dashed #cbdcd0; padding-top:5px;">
-                            ⚠️ Зона на карантина 2.5 км
+                            ⚠️ Карантинна зона 2.5 км
                         </div>
                     </div>
                 `;
@@ -550,7 +618,7 @@
                 console.error(error);
 
                 setValueEl.innerHTML = '--- <small>°C·дни</small>';
-                lastUpdatedEl.textContent = '---';
+                measurementDateEl.textContent = '---';
 
                 statusEl.className = 'status-badge error';
                 statusIcon.textContent = '⚠️';
@@ -559,7 +627,7 @@
                 marker.setPopupContent(`
                     <div style="padding:10px; text-align:center;">
                         <div style="color:#e07c2c; font-weight:700;">⚠️ Грешка</div>
-                        <div style="font-size:0.7rem; margin-top:5px;">Няма връзка с БАБРЗ</div>
+                        <div style="font-size:0.7rem; margin-top:5px;">${error.message}</div>
                     </div>
                 `);
 
@@ -575,7 +643,6 @@
             setTimeout(() => toast.remove(), 2500);
         }
 
-        // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
             autoRefreshInterval = setInterval(() => loadSetData(false), 300000);
