@@ -403,7 +403,7 @@
         </div>
 
         <div class="footer-note">
-            Данните се обновяват на всеки 5 мин • БАБРЗ
+            Данните се обновяват на всеки 5 мин • Google Sheets
         </div>
     </div>
 
@@ -413,14 +413,9 @@
         const CENTER_LAT = 43.571194;
         const CENTER_LNG = 25.310833;
         const RADIUS_KM = 2.5;
-        const DATA_URL = 'https://app.coupler.io/export/w/c7881644-6a10-480b-90e0-294a4068cf85.json?access_token=107e4f8e4da1c85a796819e244a7fbba3d3e165645df419ace8f06319491';
         
-        const PROXY_OPTIONS = [
-            'https://api.codetabs.com/v1/proxy?quest=',
-            'https://cors-anywhere.herokuapp.com/',
-            'https://proxy.cors.sh/',
-            'https://cors-proxy.htmldriven.com/?url='
-        ];
+        // Google Sheets CSV URL (публикуван като CSV)
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvIOtpcSziONTsVgZUjUoYsoMKBWfPZYmSVznUNQuOr3Ecxnp1Cq6Tsi0FTed_qs6d8nPadLuJU_V/pub?output=csv";
 
         let map, marker, circle;
         let autoRefreshInterval;
@@ -463,48 +458,117 @@
             loadSetData(false);
         }
 
-        function extractData(data) {
-            if (Array.isArray(data) && data.length > 0) {
-                const firstItem = data[0];
-                
-                if (firstItem && 'Date' in firstItem && 'DD' in firstItem) {
-                    const sortedData = [...data].sort((a, b) => {
-                        try {
-                            const [aDay, aMonth, aYear] = a.Date.split('.');
-                            const [bDay, bMonth, bYear] = b.Date.split('.');
-                            const dateA = new Date(aYear, aMonth - 1, aDay);
-                            const dateB = new Date(bYear, bMonth - 1, bDay);
-                            return dateA - dateB;
-                        } catch (e) {
-                            return 0;
-                        }
-                    });
-                    
-                    const lastRecord = sortedData[sortedData.length - 1];
-                    return {
-                        value: lastRecord.DD,
-                        date: lastRecord.Date
-                    };
+        // Функция за парсване на CSV (поддържа кавички и запетаи в клетки)
+        function parseCSV(csvText) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = "";
+            let inQuotes = false;
+
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                const nextChar = csvText[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentCell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentCell.trim());
+                    currentCell = "";
+                } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+                    if (char === '\r') i++;
+                    currentRow.push(currentCell.trim());
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentCell = "";
+                } else {
+                    currentCell += char;
                 }
             }
-            
-            else if (data && typeof data === 'object' && 'total_sum' in data) {
-                return {
-                    value: parseFloat(data.total_sum),
-                    date: data.last_updated ? data.last_updated.split(' ')[0] : '---'
-                };
+            if (currentCell !== "" || currentRow.length > 0) {
+                currentRow.push(currentCell.trim());
+                rows.push(currentRow);
             }
-            
+            return rows.filter(row => row.length > 1 || (row.length === 1 && row[0] !== ""));
+        }
+
+        // Извличане на СЕТ стойност и дата от CSV данните
+        function extractSetFromCSV(dataRows) {
+            if (!dataRows || dataRows.length < 2) {
+                return null;
+            }
+
+            const headers = dataRows[0];
+            const lastRow = dataRows[dataRows.length - 1];
+
+            // Проверка за празен последен ред
+            const isEmpty = lastRow.every(cell => cell === "" || cell === undefined);
+            if (isEmpty && dataRows.length > 1) {
+                return null;
+            }
+
+            // Търсене на колони, съдържащи СЕТ/DD стойност и дата
+            let setValue = null;
+            let dateValue = null;
+            let setColumnIndex = -1;
+            let dateColumnIndex = -1;
+
+            for (let i = 0; i < headers.length; i++) {
+                const header = headers[i].toLowerCase();
+                
+                // Търсене на колона със СЕТ/DD стойност
+                if (header === 'dd' || header === 'сет' || header === 'set' || 
+                    header === 'сума сет' || header === 'total_sum' || header === 'стойност') {
+                    setColumnIndex = i;
+                }
+                
+                // Търсене на колона с дата
+                if (header === 'date' || header === 'дата' || header === 'ден' || 
+                    header === 'measurement_date' || header === 'дд.мм.гггг') {
+                    dateColumnIndex = i;
+                }
+            }
+
+            // Ако не са намерени специфични колони, използваме първа колона за дата и втора за стойност
+            if (setColumnIndex === -1 && lastRow.length >= 2) {
+                setColumnIndex = 1;
+            }
+            if (dateColumnIndex === -1 && lastRow.length >= 1) {
+                dateColumnIndex = 0;
+            }
+
+            if (setColumnIndex !== -1 && lastRow[setColumnIndex] !== undefined) {
+                const rawValue = lastRow[setColumnIndex];
+                const parsedValue = parseFloat(rawValue.toString().replace(',', '.'));
+                if (!isNaN(parsedValue)) {
+                    setValue = parsedValue;
+                }
+            }
+
+            if (dateColumnIndex !== -1 && lastRow[dateColumnIndex] !== undefined) {
+                dateValue = lastRow[dateColumnIndex];
+            }
+
+            if (setValue !== null) {
+                return { value: setValue, date: dateValue || '---' };
+            }
+
             return null;
         }
 
         function formatDate(dateStr) {
             if (!dateStr || dateStr === '---') return '---';
             try {
+                // Ако съдържа интервал (време), вземаме само датата
                 if (dateStr.includes(' ')) {
                     dateStr = dateStr.split(' ')[0];
                 }
-                
+
+                // Формат YYYY-MM-DD
                 if (dateStr.includes('-')) {
                     const [year, month, day] = dateStr.split('-');
                     const date = new Date(year, month - 1, day);
@@ -514,8 +578,22 @@
                         year: 'numeric'
                     });
                 }
+                // Формат DD.MM.YYYY
                 else if (dateStr.includes('.')) {
-                    const [day, month, year] = dateStr.split('.');
+                    const parts = dateStr.split('.');
+                    if (parts.length === 3) {
+                        const [day, month, year] = parts;
+                        const date = new Date(year, month - 1, day);
+                        return date.toLocaleDateString('bg-BG', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        });
+                    }
+                }
+                // Формат DD/MM/YYYY
+                else if (dateStr.includes('/')) {
+                    const [day, month, year] = dateStr.split('/');
                     const date = new Date(year, month - 1, day);
                     return date.toLocaleDateString('bg-BG', {
                         day: 'numeric',
@@ -526,36 +604,6 @@
                 return dateStr;
             } catch (e) {
                 return dateStr;
-            }
-        }
-
-        async function fetchWithProxy(url, proxyIndex = 0) {
-            if (proxyIndex >= PROXY_OPTIONS.length) {
-                throw new Error('Всички проксита са изчерпани');
-            }
-
-            const proxy = PROXY_OPTIONS[proxyIndex];
-            const cacheBuster = '?t=' + Date.now();
-            const fullUrl = url.includes('?') ? url + '&' + cacheBuster.substring(1) : url + cacheBuster;
-            const proxyUrl = proxy + encodeURIComponent(fullUrl);
-            
-            try {
-                const response = await fetch(proxyUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const text = await response.text();
-                
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    throw new Error('Невалиден JSON формат');
-                }
-                
-            } catch (error) {
-                return fetchWithProxy(url, proxyIndex + 1);
             }
         }
 
@@ -570,12 +618,33 @@
                 statusEl.className = 'status-badge';
                 statusIcon.textContent = '🔄';
                 statusText.textContent = 'Свързване...';
-                
-                const data = await fetchWithProxy(DATA_URL);
-                const extracted = extractData(data);
-                
-                if (!extracted) {
-                    throw new Error('Неразпознат формат на данните');
+
+                // Зареждане на CSV от Google Sheets
+                const response = await fetch(CSV_URL, {
+                    cache: "no-store",
+                    headers: {
+                        "Cache-Control": "no-cache"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP грешка: ${response.status}`);
+                }
+
+                const csvText = await response.text();
+                if (!csvText.trim()) {
+                    throw new Error('Празен CSV файл');
+                }
+
+                const parsedData = parseCSV(csvText);
+                if (parsedData.length === 0) {
+                    throw new Error('Няма валидни редове в CSV');
+                }
+
+                const extracted = extractSetFromCSV(parsedData);
+
+                if (!extracted || extracted.value === null) {
+                    throw new Error('Неуспешно извличане на СЕТ данни');
                 }
 
                 const value = extracted.value;
@@ -628,6 +697,7 @@
                     <div style="padding:10px; text-align:center;">
                         <div style="color:#e07c2c; font-weight:700;">⚠️ Грешка</div>
                         <div style="font-size:0.7rem; margin-top:5px;">${error.message}</div>
+                        <div style="font-size:0.6rem; margin-top:8px;">💡 Проверете интернет връзката</div>
                     </div>
                 `);
 
