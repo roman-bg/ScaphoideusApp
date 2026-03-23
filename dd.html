@@ -1,1 +1,353 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Последни данни от Google Sheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9eef3 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .card-header {
+            background: linear-gradient(98deg, #10b981 0%, #059669 100%);
+            padding: 1.5rem 2rem;
+            color: white;
+        }
+
+        .card-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-header h1::before {
+            content: "📋";
+            font-size: 1.5rem;
+        }
+
+        .card-header p {
+            margin-top: 0.5rem;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .update-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 40px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 16px;
+            border-left: 4px solid #10b981;
+            transition: all 0.2s;
+        }
+
+        .info-label {
+            font-weight: 700;
+            min-width: 140px;
+            color: #1f2937;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            word-break: break-word;
+        }
+
+        .info-value {
+            color: #111827;
+            font-size: 1rem;
+            font-weight: 500;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .last-updated {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .refresh-btn {
+            background: #f3f4f6;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #e5e7eb;
+            transform: scale(0.98);
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #dc2626;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            color: #4b5563;
+            gap: 0.75rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 1rem; }
+            .info-row { flex-direction: column; gap: 0.5rem; }
+            .info-label { min-width: auto; }
+            .card-header h1 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h1>Актуални данни</h1>
+            <p>Последният запис от свързаната Google Sheet таблица</p>
+            <div class="update-badge" id="statusBadge">⏳ Зареждане...</div>
+        </div>
+        <div class="content" id="mainContent">
+            <div class="loading">
+                <div class="spinner"></div>
+                <span>Зареждане на последния ред...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvIOtpcSziONTsVgZUjUoYsoMKBWfPZYmSVznUNQuOr3Ecxnp1Cq6Tsi0FTed_qs6d8nPadLuJU_V/pub?output=csv";
+
+    // Функция за ръчно парсване на CSV (поддържа кавички и запетаи в клетки)
+    function parseCSV(csvText) {
+        const rows = [];
+        let currentRow = [];
+        let currentCell = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < csvText.length; i++) {
+            const char = csvText[i];
+            const nextChar = csvText[i + 1];
+
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    currentCell += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                currentRow.push(currentCell.trim());
+                currentCell = "";
+            } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+                if (char === '\r') i++;
+                currentRow.push(currentCell.trim());
+                rows.push(currentRow);
+                currentRow = [];
+                currentCell = "";
+            } else {
+                currentCell += char;
+            }
+        }
+        if (currentCell !== "" || currentRow.length > 0) {
+            currentRow.push(currentCell.trim());
+            rows.push(currentRow);
+        }
+        return rows.filter(row => row.length > 1 || (row.length === 1 && row[0] !== ""));
+    }
+
+    // Визуализиране само на последния ред
+    function displayLastRow(dataRows) {
+        if (!dataRows || dataRows.length < 2) {
+            throw new Error("Таблицата няма достатъчно данни (нужни са поне заглавен ред + един ред данни).");
+        }
+
+        const headers = dataRows[0];
+        const lastRow = dataRows[dataRows.length - 1];
+
+        // Проверка за празен последен ред
+        const isEmpty = lastRow.every(cell => cell === "" || cell === undefined);
+        if (isEmpty && dataRows.length > 1) {
+            throw new Error("Последният ред е празен. Проверете таблицата.");
+        }
+
+        // Генериране на HTML за визуализация
+        let html = `<div class="info-grid">`;
+        for (let i = 0; i < headers.length; i++) {
+            const headerName = headers[i] || `Колона ${i + 1}`;
+            const cellValue = (lastRow[i] !== undefined && lastRow[i] !== "") ? lastRow[i] : "—";
+            html += `
+                <div class="info-row">
+                    <div class="info-label">${escapeHtml(headerName)}</div>
+                    <div class="info-value">${escapeHtml(cellValue)}</div>
+                </div>
+            `;
+        }
+        html += `</div>`;
+
+        // Актуализиране на съдържанието
+        document.getElementById("mainContent").innerHTML = html;
+
+        // Актуализиране на статус badge с време
+        const now = new Date();
+        const formattedTime = now.toLocaleString('bg-BG');
+        const statusBadge = document.getElementById("statusBadge");
+        statusBadge.innerHTML = `✅ Актуално към ${formattedTime}`;
+        statusBadge.style.background = "rgba(255,255,255,0.25)";
+    }
+
+    // Помощна функция за escape на HTML (сигурност)
+    function escapeHtml(str) {
+        if (!str) return "";
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    // Показване на грешка по чист начин
+    function showError(message) {
+        const errorHtml = `
+            <div class="error-message">
+                ⚠️ <strong>Грешка при зареждане</strong><br>
+                ${escapeHtml(message)}<br><br>
+                <small>💡 Уверете се, че таблицата е публикувана (File → Share → Publish to web) и линкът е верен.</small>
+            </div>
+            <div class="last-updated" style="justify-content: center;">
+                <button class="refresh-btn" onclick="location.reload()">🔄 Опитай отново</button>
+            </div>
+        `;
+        document.getElementById("mainContent").innerHTML = errorHtml;
+        const statusBadge = document.getElementById("statusBadge");
+        statusBadge.innerHTML = "❌ Грешка при зареждане";
+        statusBadge.style.background = "rgba(220,38,38,0.25)";
+    }
+
+    // Основна функция за зареждане и обработка на CSV
+    async function fetchAndDisplayLastRow() {
+        try {
+            // Показване на loading състояние
+            document.getElementById("mainContent").innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span>Зареждане на последния ред...</span>
+                </div>
+            `;
+            document.getElementById("statusBadge").innerHTML = "⏳ Обновяване...";
+            document.getElementById("statusBadge").style.background = "rgba(255,255,255,0.2)";
+
+            const response = await fetch(CSV_URL, {
+                cache: "no-store", // предотвратява кеширане
+                headers: {
+                    "Cache-Control": "no-cache"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP грешка: ${response.status} ${response.statusText}`);
+            }
+
+            const csvText = await response.text();
+            if (!csvText.trim()) {
+                throw new Error("Получен е празен CSV файл.");
+            }
+
+            const parsedData = parseCSV(csvText);
+            if (parsedData.length === 0) {
+                throw new Error("Няма валидни редове в CSV.");
+            }
+
+            displayLastRow(parsedData);
+        } catch (err) {
+            console.error("Грешка при зареждане:", err);
+            showError(err.message);
+        }
+    }
+
+    // Стартиране при зареждане на страницата
+    fetchAndDisplayLastRow();
+</script>
+</body>
+</html>
