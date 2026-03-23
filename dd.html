@@ -2,8 +2,12 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Последни данни от Google Sheet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>СЕТ карантина - Свищов</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <style>
         * {
             margin: 0;
@@ -12,342 +16,711 @@
         }
 
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e9eef3 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a2e28;
+            color: #1a2e28;
+            line-height: 1.3;
+            padding: 0;
             min-height: 100vh;
-            padding: 2rem;
+            display: flex;
+            flex-direction: column;
         }
 
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .card {
+            max-width: 100%;
+            margin: 0;
             background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            transition: transform 0.2s ease;
-        }
-
-        .card-header {
-            background: linear-gradient(98deg, #10b981 0%, #059669 100%);
-            padding: 1.5rem 2rem;
-            color: white;
-        }
-
-        .card-header h1 {
-            font-size: 1.75rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-header h1::before {
-            content: "📋";
-            font-size: 1.5rem;
-        }
-
-        .card-header p {
-            margin-top: 0.5rem;
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        .update-badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 40px;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            margin-top: 0.75rem;
-        }
-
-        .content {
-            padding: 2rem;
-        }
-
-        .info-grid {
+            border-radius: 0;
+            box-shadow: none;
+            padding: 12px;
+            flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            margin-bottom: 2rem;
+        }
+
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .site-logo {
+            max-width: 40px;
+            max-height: 40px;
+            border-radius: 10px;
+            border: 2px solid white;
+            background: white;
+            object-fit: contain;
+        }
+
+        h1 {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1b4d3e;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        h1 span {
+            background: #ddeee5;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.6rem;
+            font-weight: 500;
+            color: #0f4235;
+            width: fit-content;
+        }
+
+        .subtitle {
+            color: #547a6a;
+            font-size: 0.7rem;
+            margin-bottom: 10px;
+            border-left: 3px solid #9bc5b4;
+            padding-left: 8px;
+            font-weight: 500;
+        }
+
+        .legend {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 8px 12px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,20,10,0.1);
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+            border: 1px solid #d0e0d6;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            white-space: nowrap;
+        }
+
+        .legend::-webkit-scrollbar {
+            display: none;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #1b4d3e;
+            flex-shrink: 0;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .legend-color.point {
+            background: #c0392b;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px #c0392b;
+        }
+
+        .legend-color.radius {
+            background: rgba(224, 124, 44, 0.2);
+            border: 2px solid #e07c2c;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 45vh;
+            min-height: 320px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #cbdcd0;
+            box-shadow: 0 5px 15px rgba(20, 60, 45, 0.15);
+            margin-bottom: 12px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #f0f7f3 0%, #e8f2ec 100%);
+            border-radius: 20px;
+            padding: 12px;
+            margin-top: 0;
+            border-left: 5px solid #1f7f5f;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.03);
         }
 
         .info-row {
             display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            padding: 1rem;
-            background: #f9fafb;
-            border-radius: 16px;
-            border-left: 4px solid #10b981;
-            transition: all 0.2s;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.7);
+            padding: 8px 12px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(31,127,95,0.2);
         }
 
-        .info-label {
-            font-weight: 700;
-            min-width: 140px;
-            color: #1f2937;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            word-break: break-word;
+        .info-icon {
+            font-size: 1.3rem;
+            background: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,40,20,0.1);
+            border: 2px solid #9bc5b4;
+            flex-shrink: 0;
         }
 
-        .info-value {
-            color: #111827;
-            font-size: 1rem;
-            font-weight: 500;
-            word-break: break-word;
+        .info-content {
+            display: flex;
+            flex-direction: column;
             flex: 1;
         }
 
-        .last-updated {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
-            font-size: 0.8rem;
-            color: #6b7280;
-            text-align: center;
+        .info-label {
+            font-size: 0.6rem;
+            color: #547a6a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1b4d3e;
+            line-height: 1.2;
+        }
+
+        .info-value small {
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: #547a6a;
+            margin-left: 3px;
+        }
+
+        .action-row {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            background: #ecf6f0;
+            border-radius: 30px;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            color: #1b4d3e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #9bc5b4;
+            backdrop-filter: blur(5px);
+            flex: 1;
+            white-space: nowrap;
+        }
+
+        .status-badge.connected {
+            background: #dff0e5;
+            color: #1f7f5f;
+            border-color: #1f7f5f;
+        }
+
+        .status-badge.error {
+            background: #ffefdb;
+            color: #e07c2c;
+            border-color: #e07c2c;
         }
 
         .refresh-btn {
-            background: #f3f4f6;
+            background: #1b4d3e;
+            color: white;
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 40px;
+            padding: 8px 16px;
+            border-radius: 30px;
             font-size: 0.8rem;
-            font-weight: 500;
-            color: #374151;
+            font-weight: 600;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s;
-        }
-
-        .refresh-btn:hover {
-            background: #e5e7eb;
-            transform: scale(0.98);
-        }
-
-        .error-message {
-            background: #fee2e2;
-            color: #b91c1c;
-            padding: 1rem;
-            border-radius: 16px;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #dc2626;
-        }
-
-        .loading {
             display: flex;
-            justify-content: center;
             align-items: center;
-            padding: 3rem;
-            color: #4b5563;
-            gap: 0.75rem;
+            gap: 5px;
+            transition: all 0.2s ease;
+            border: 2px solid #1b4d3e;
+            box-shadow: 0 3px 8px rgba(27, 77, 62, 0.2);
+            flex-shrink: 0;
         }
 
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid #e5e7eb;
-            border-top-color: #10b981;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+        .refresh-btn:active {
+            background: #0f3a2e;
+            transform: scale(0.97);
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .footer-note {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px 5px 5px;
+            border-top: 1px solid #dbd0c2;
+            color: #547a6a;
+            font-size: 0.7rem;
+            font-weight: 500;
         }
 
-        @media (max-width: 600px) {
-            body { padding: 1rem; }
-            .info-row { flex-direction: column; gap: 0.5rem; }
-            .info-label { min-width: auto; }
-            .card-header h1 { font-size: 1.4rem; }
+        .custom-popup {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 16px !important;
+            background: white !important;
+            box-shadow: 0 5px 20px rgba(0,40,20,0.2) !important;
+            border: 1px solid #9bc5b4 !important;
+            padding: 0 !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 10px !important;
+            min-width: 200px !important;
+        }
+
+        .leaflet-popup-tip {
+            background: white !important;
+            border: 1px solid #9bc5b4 !important;
+        }
+
+        .toast-message {
+            background: linear-gradient(135deg, #1f7f5f, #1b4d3e);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            z-index: 10000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            animation: slideUp 0.2s ease, fadeOut 0.2s ease 2.3s forwards;
+            border: 2px solid white;
+        }
+
+        .toast-message.error {
+            background: linear-gradient(135deg, #e07c2c, #c0392b);
+        }
+
+        @keyframes slideUp {
+            from { bottom: 10px; opacity: 0; transform: scale(0.95); }
+            to { bottom: 20px; opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.9); }
+        }
+
+        .center-label {
+            display: none;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="card">
-        <div class="card-header">
-            <h1>Актуални данни</h1>
-            <p>Последният запис от свързаната Google Sheet таблица</p>
-            <div class="update-badge" id="statusBadge">⏳ Зареждане...</div>
+    <div class="container">
+        <div class="title-wrapper">
+            <img src="sitelogo.jpg" alt="Лого" class="site-logo" onerror="this.style.display='none'">
+            <h1>
+                СЕТ в карантинна зона
+                <span>Сума на ефективните температури</span>
+            </h1>
         </div>
-        <div class="content" id="mainContent">
-            <div class="loading">
-                <div class="spinner"></div>
-                <span>Зареждане на последния ред...</span>
+
+        <div class="subtitle">
+            📍 Свищов (43.62°N, 25.35°E) • Радиус 2.5 км
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color point"></div>
+                <span>🔥 Открито огнище</span>
             </div>
+            <div class="legend-item">
+                <div class="legend-color radius"></div>
+                <span>⚠️ Карантинна зона (2.5 км)</span>
+            </div>
+            <div class="legend-item">
+                <span>👆 Докоснете маркера</span>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-row">
+                <div class="info-icon">🌡️</div>
+                <div class="info-content">
+                    <span class="info-label">СЕТ стойност</span>
+                    <span class="info-value" id="setValue">--- <small>°C·дни</small></span>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-icon">📅</div>
+                <div class="info-content">
+                    <span class="info-label">Дата</span>
+                    <span class="info-value" id="measurementDate">---</span>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <div id="statusContainer" class="status-badge">
+                    <span id="statusIcon">🔄</span>
+                    <span id="statusText">Зареждане...</span>
+                </div>
+
+                <button class="refresh-btn" onclick="loadSetData(true)">
+                    <span>🔄</span> Обнови
+                </button>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            Данните се обновяват на всеки 5 мин • Google Sheets
         </div>
     </div>
-</div>
 
-<script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvIOtpcSziONTsVgZUjUoYsoMKBWfPZYmSVznUNQuOr3Ecxnp1Cq6Tsi0FTed_qs6d8nPadLuJU_V/pub?output=csv";
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    // Функция за ръчно парсване на CSV (поддържа кавички и запетаи в клетки)
-    function parseCSV(csvText) {
-        const rows = [];
-        let currentRow = [];
-        let currentCell = "";
-        let inQuotes = false;
+    <script>
+        const CENTER_LAT = 43.571194;
+        const CENTER_LNG = 25.310833;
+        const RADIUS_KM = 2.5;
+        
+        // Google Sheets CSV URL (публикуван като CSV)
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvIOtpcSziONTsVgZUjUoYsoMKBWfPZYmSVznUNQuOr3Ecxnp1Cq6Tsi0FTed_qs6d8nPadLuJU_V/pub?output=csv";
 
-        for (let i = 0; i < csvText.length; i++) {
-            const char = csvText[i];
-            const nextChar = csvText[i + 1];
+        let map, marker, circle;
+        let autoRefreshInterval;
 
-            if (char === '"') {
-                if (inQuotes && nextChar === '"') {
-                    currentCell += '"';
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (char === ',' && !inQuotes) {
-                currentRow.push(currentCell.trim());
-                currentCell = "";
-            } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
-                if (char === '\r') i++;
-                currentRow.push(currentCell.trim());
-                rows.push(currentRow);
-                currentRow = [];
-                currentCell = "";
-            } else {
-                currentCell += char;
-            }
-        }
-        if (currentCell !== "" || currentRow.length > 0) {
-            currentRow.push(currentCell.trim());
-            rows.push(currentRow);
-        }
-        return rows.filter(row => row.length > 1 || (row.length === 1 && row[0] !== ""));
-    }
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([CENTER_LAT, CENTER_LNG], 12);
 
-    // Визуализиране само на последния ред
-    function displayLastRow(dataRows) {
-        if (!dataRows || dataRows.length < 2) {
-            throw new Error("Таблицата няма достатъчно данни (нужни са поне заглавен ред + един ред данни).");
-        }
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
 
-        const headers = dataRows[0];
-        const lastRow = dataRows[dataRows.length - 1];
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Проверка за празен последен ред
-        const isEmpty = lastRow.every(cell => cell === "" || cell === undefined);
-        if (isEmpty && dataRows.length > 1) {
-            throw new Error("Последният ред е празен. Проверете таблицата.");
-        }
+            marker = L.marker([CENTER_LAT, CENTER_LNG], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: '<div style="background: #c0392b; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13],
+                    popupAnchor: [0, -16]
+                })
+            }).addTo(map);
 
-        // Генериране на HTML за визуализация
-        let html = `<div class="info-grid">`;
-        for (let i = 0; i < headers.length; i++) {
-            const headerName = headers[i] || `Колона ${i + 1}`;
-            const cellValue = (lastRow[i] !== undefined && lastRow[i] !== "") ? lastRow[i] : "—";
-            html += `
-                <div class="info-row">
-                    <div class="info-label">${escapeHtml(headerName)}</div>
-                    <div class="info-value">${escapeHtml(cellValue)}</div>
-                </div>
-            `;
-        }
-        html += `</div>`;
+            circle = L.circle([CENTER_LAT, CENTER_LNG], {
+                color: '#e07c2c',
+                weight: 3,
+                fillColor: 'rgba(224, 124, 44, 0.15)',
+                fillOpacity: 0.3,
+                radius: RADIUS_KM * 1000
+            }).addTo(map);
 
-        // Актуализиране на съдържанието
-        document.getElementById("mainContent").innerHTML = html;
-
-        // Актуализиране на статус badge с време
-        const now = new Date();
-        const formattedTime = now.toLocaleString('bg-BG');
-        const statusBadge = document.getElementById("statusBadge");
-        statusBadge.innerHTML = `✅ Актуално към ${formattedTime}`;
-        statusBadge.style.background = "rgba(255,255,255,0.25)";
-    }
-
-    // Помощна функция за escape на HTML (сигурност)
-    function escapeHtml(str) {
-        if (!str) return "";
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#39;");
-    }
-
-    // Показване на грешка по чист начин
-    function showError(message) {
-        const errorHtml = `
-            <div class="error-message">
-                ⚠️ <strong>Грешка при зареждане</strong><br>
-                ${escapeHtml(message)}<br><br>
-                <small>💡 Уверете се, че таблицата е публикувана (File → Share → Publish to web) и линкът е верен.</small>
-            </div>
-            <div class="last-updated" style="justify-content: center;">
-                <button class="refresh-btn" onclick="location.reload()">🔄 Опитай отново</button>
-            </div>
-        `;
-        document.getElementById("mainContent").innerHTML = errorHtml;
-        const statusBadge = document.getElementById("statusBadge");
-        statusBadge.innerHTML = "❌ Грешка при зареждане";
-        statusBadge.style.background = "rgba(220,38,38,0.25)";
-    }
-
-    // Основна функция за зареждане и обработка на CSV
-    async function fetchAndDisplayLastRow() {
-        try {
-            // Показване на loading състояние
-            document.getElementById("mainContent").innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <span>Зареждане на последния ред...</span>
-                </div>
-            `;
-            document.getElementById("statusBadge").innerHTML = "⏳ Обновяване...";
-            document.getElementById("statusBadge").style.background = "rgba(255,255,255,0.2)";
-
-            const response = await fetch(CSV_URL, {
-                cache: "no-store", // предотвратява кеширане
-                headers: {
-                    "Cache-Control": "no-cache"
-                }
+            marker.bindPopup('Зареждане...', {
+                className: 'custom-popup',
+                closeButton: false
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP грешка: ${response.status} ${response.statusText}`);
-            }
-
-            const csvText = await response.text();
-            if (!csvText.trim()) {
-                throw new Error("Получен е празен CSV файл.");
-            }
-
-            const parsedData = parseCSV(csvText);
-            if (parsedData.length === 0) {
-                throw new Error("Няма валидни редове в CSV.");
-            }
-
-            displayLastRow(parsedData);
-        } catch (err) {
-            console.error("Грешка при зареждане:", err);
-            showError(err.message);
+            loadSetData(false);
         }
-    }
 
-    // Стартиране при зареждане на страницата
-    fetchAndDisplayLastRow();
-</script>
+        // Функция за парсване на CSV (поддържа кавички и запетаи в клетки)
+        function parseCSV(csvText) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = "";
+            let inQuotes = false;
+
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                const nextChar = csvText[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentCell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentCell.trim());
+                    currentCell = "";
+                } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+                    if (char === '\r') i++;
+                    currentRow.push(currentCell.trim());
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentCell = "";
+                } else {
+                    currentCell += char;
+                }
+            }
+            if (currentCell !== "" || currentRow.length > 0) {
+                currentRow.push(currentCell.trim());
+                rows.push(currentRow);
+            }
+            return rows.filter(row => row.length > 1 || (row.length === 1 && row[0] !== ""));
+        }
+
+        // Извличане на СЕТ стойност и дата от CSV данните
+        function extractSetFromCSV(dataRows) {
+            if (!dataRows || dataRows.length < 2) {
+                return null;
+            }
+
+            const headers = dataRows[0];
+            const lastRow = dataRows[dataRows.length - 1];
+
+            // Проверка за празен последен ред
+            const isEmpty = lastRow.every(cell => cell === "" || cell === undefined);
+            if (isEmpty && dataRows.length > 1) {
+                return null;
+            }
+
+            // Търсене на колони, съдържащи СЕТ/DD стойност и дата
+            let setValue = null;
+            let dateValue = null;
+            let setColumnIndex = -1;
+            let dateColumnIndex = -1;
+
+            for (let i = 0; i < headers.length; i++) {
+                const header = headers[i].toLowerCase();
+                
+                // Търсене на колона със СЕТ/DD стойност
+                if (header === 'dd' || header === 'сет' || header === 'set' || 
+                    header === 'сума сет' || header === 'total_sum' || header === 'стойност') {
+                    setColumnIndex = i;
+                }
+                
+                // Търсене на колона с дата
+                if (header === 'date' || header === 'дата' || header === 'ден' || 
+                    header === 'measurement_date' || header === 'дд.мм.гггг') {
+                    dateColumnIndex = i;
+                }
+            }
+
+            // Ако не са намерени специфични колони, използваме първа колона за дата и втора за стойност
+            if (setColumnIndex === -1 && lastRow.length >= 2) {
+                setColumnIndex = 1;
+            }
+            if (dateColumnIndex === -1 && lastRow.length >= 1) {
+                dateColumnIndex = 0;
+            }
+
+            if (setColumnIndex !== -1 && lastRow[setColumnIndex] !== undefined) {
+                const rawValue = lastRow[setColumnIndex];
+                const parsedValue = parseFloat(rawValue.toString().replace(',', '.'));
+                if (!isNaN(parsedValue)) {
+                    setValue = parsedValue;
+                }
+            }
+
+            if (dateColumnIndex !== -1 && lastRow[dateColumnIndex] !== undefined) {
+                dateValue = lastRow[dateColumnIndex];
+            }
+
+            if (setValue !== null) {
+                return { value: setValue, date: dateValue || '---' };
+            }
+
+            return null;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === '---') return '---';
+            try {
+                // Ако съдържа интервал (време), вземаме само датата
+                if (dateStr.includes(' ')) {
+                    dateStr = dateStr.split(' ')[0];
+                }
+
+                // Формат YYYY-MM-DD
+                if (dateStr.includes('-')) {
+                    const [year, month, day] = dateStr.split('-');
+                    const date = new Date(year, month - 1, day);
+                    return date.toLocaleDateString('bg-BG', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                }
+                // Формат DD.MM.YYYY
+                else if (dateStr.includes('.')) {
+                    const parts = dateStr.split('.');
+                    if (parts.length === 3) {
+                        const [day, month, year] = parts;
+                        const date = new Date(year, month - 1, day);
+                        return date.toLocaleDateString('bg-BG', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        });
+                    }
+                }
+                // Формат DD/MM/YYYY
+                else if (dateStr.includes('/')) {
+                    const [day, month, year] = dateStr.split('/');
+                    const date = new Date(year, month - 1, day);
+                    return date.toLocaleDateString('bg-BG', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                }
+                return dateStr;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        async function loadSetData(showMessage = false) {
+            const statusEl = document.getElementById('statusContainer');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const setValueEl = document.getElementById('setValue');
+            const measurementDateEl = document.getElementById('measurementDate');
+
+            try {
+                statusEl.className = 'status-badge';
+                statusIcon.textContent = '🔄';
+                statusText.textContent = 'Свързване...';
+
+                // Зареждане на CSV от Google Sheets
+                const response = await fetch(CSV_URL, {
+                    cache: "no-store",
+                    headers: {
+                        "Cache-Control": "no-cache"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP грешка: ${response.status}`);
+                }
+
+                const csvText = await response.text();
+                if (!csvText.trim()) {
+                    throw new Error('Празен CSV файл');
+                }
+
+                const parsedData = parseCSV(csvText);
+                if (parsedData.length === 0) {
+                    throw new Error('Няма валидни редове в CSV');
+                }
+
+                const extracted = extractSetFromCSV(parsedData);
+
+                if (!extracted || extracted.value === null) {
+                    throw new Error('Неуспешно извличане на СЕТ данни');
+                }
+
+                const value = extracted.value;
+                const date = extracted.date;
+
+                setValueEl.innerHTML = `${value.toFixed(1)} <small>°C·дни</small>`;
+                measurementDateEl.textContent = formatDate(date);
+
+                const popupContent = `
+                    <div style="min-width: 180px; padding: 5px;">
+                        <div style="font-weight:700; color:#1b4d3e; border-bottom:2px solid #9bc5b4; padding-bottom:6px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                            <span style="background:#1b4d3e; color:white; width:22px; height:22px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:0.7rem;">🔥</span>
+                            <span style="font-size:0.9rem;">СЕТ Свищов</span>
+                        </div>
+                        <div style="background:#f0f7f3; padding:8px 10px; border-radius:20px; margin-bottom:5px;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:#1b4d3e;">🌡️ Стойност:</span>
+                                <span style="font-weight:700; color:#1b4d3e;">${value.toFixed(1)} °C·дни</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                                <span style="color:#547a6a;">📅 Дата:</span>
+                                <span style="font-weight:500; color:#1b4d3e;">${formatDate(date)}</span>
+                            </div>
+                        </div>
+                        <div style="font-size:0.65rem; color:#547a6a; text-align:center; border-top:1px dashed #cbdcd0; padding-top:5px;">
+                            ⚠️ Карантинна зона 2.5 км
+                        </div>
+                    </div>
+                `;
+
+                marker.setPopupContent(popupContent);
+
+                statusEl.className = 'status-badge connected';
+                statusIcon.textContent = '✅';
+                statusText.textContent = 'Активна връзка';
+
+                if (showMessage) showToast('Данните са обновени');
+
+            } catch (error) {
+                console.error(error);
+
+                setValueEl.innerHTML = '--- <small>°C·дни</small>';
+                measurementDateEl.textContent = '---';
+
+                statusEl.className = 'status-badge error';
+                statusIcon.textContent = '⚠️';
+                statusText.textContent = 'Няма връзка';
+
+                marker.setPopupContent(`
+                    <div style="padding:10px; text-align:center;">
+                        <div style="color:#e07c2c; font-weight:700;">⚠️ Грешка</div>
+                        <div style="font-size:0.7rem; margin-top:5px;">${error.message}</div>
+                        <div style="font-size:0.6rem; margin-top:8px;">💡 Проверете интернет връзката</div>
+                    </div>
+                `);
+
+                if (showMessage) showToast('Неуспешна връзка', true);
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${isError ? 'error' : ''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            autoRefreshInterval = setInterval(() => loadSetData(false), 300000);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
+    </script>
 </body>
 </html>
