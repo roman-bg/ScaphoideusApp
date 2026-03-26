@@ -390,7 +390,7 @@
             </div>
             <div class="legend-item">
                 <div class="legend-color radius"></div>
-                <span>⚠️ Карантинна зона (15 км)</span>
+                <span>⚠️ СЕТ зона (15 км)</span>
             </div>
             <div class="legend-item">
                 <span>👆 Докоснете бутона за обновяване</span>
@@ -472,7 +472,7 @@
         const CENTER_LAT = 43.0822;
         const CENTER_LNG = 25.6317;
         const RADIUS_KM = 15;          // 15 километра
-        
+
         // Актуален линк за Google Sheets (CSV)
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTWga6xwcZbXTCcrIywwQNdnG3biBvrk5am8gnnomjtyZPc_hDztwlqmPBTaTfe32dVSknwgPKWGTwo/pub?output=csv";
 
@@ -500,7 +500,7 @@
                     iconAnchor: [16, 16]
                 })
             }).addTo(map);
-            
+
             // Забраняваме всякакъв popup да се показва при клик
             marker.unbindPopup();
 
@@ -578,12 +578,12 @@
             for (let i = 0; i < headers.length; i++) {
                 const header = headers[i].toLowerCase().trim();
                 // СЕТ, DD, set, sum, total_set, стойност, ефективни температури
-                if (header === 'dd' || header === 'сет' || header === 'set' || 
+                if (header === 'dd' || header === 'сет' || header === 'set' ||
                     header === 'сума сет' || header === 'total_sum' || header === 'стойност' ||
                     header.includes('сет') || header.includes('sum') || header === 'cet') {
                     setColumnIndex = i;
                 }
-                if (header === 'date' || header === 'дата' || header === 'ден' || 
+                if (header === 'date' || header === 'дата' || header === 'ден' ||
                     header === 'measurement_date' || header.includes('дата') || header === 'timestamp') {
                     dateColumnIndex = i;
                 }
