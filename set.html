@@ -1,861 +1,732 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-<title>Определител на Scaphoideus titanus причинител на Flavescence Doré</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>СЕТ карантина - Велико Търново</title>
 
-<!-- jsPDF + html2canvas (за PDF) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #f3efe8;
-  color: #1a2e28;
-  line-height: 1.4;
-  padding: 8px 6px;
-  min-height: 100vh;
-}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a2e28;
+            color: #1a2e28;
+            line-height: 1.3;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-/* ЛАНДШАФТ СЪОБЩЕНИЕ – УМНО */
-.orientation-hint {
-  position: fixed;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
-  background: #1b4d3e;
-  color: white;
-  padding: 14px 16px;
-  border-radius: 50px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  text-align: center;
-  box-shadow: 0 8px 25px rgba(0, 40, 20, 0.5);
-  z-index: 10000;
-  border: 2px solid #fed976;
-  backdrop-filter: blur(4px);
-  display: none;
-  animation: slideUp 0.3s ease;
-}
-.orientation-hint.show {
-  display: block;
-}
-@keyframes slideUp {
-  from { bottom: -20px; opacity: 0; }
-  to { bottom: 16px; opacity: 1; }
-}
-@media (max-width: 700px) and (orientation: portrait) {
-  .orientation-hint {
-    display: block;
-  }
-}
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
 
-/* КОНТЕЙНЕР */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 28px;
-  box-shadow: 0 15px 35px -15px rgba(20, 60, 45, 0.3);
-  padding: 16px 14px 24px 14px;
-  border: 1px solid #e0d6ca;
-}
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
 
-/* НАВИГАЦИЯ 5 ТАБА – КОМПАКТНА */
-.nav-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 18px;
-  border-bottom: 2px solid #dbd0c2;
-  padding-bottom: 12px;
-  justify-content: center;
-}
-.nav-tab {
-  padding: 7px 12px;
-  border-radius: 50px;
-  background: #ede6dc;
-  color: #1b4d3e;
-  font-weight: 600;
-  font-size: 0.8rem;
-  cursor: pointer;
-  border: 1px solid #cbbfb1;
-  transition: 0.15s;
-  white-space: nowrap;
-  flex: 0 1 auto;
-}
-.nav-tab.active {
-  background: #1b4d3e;
-  color: white;
-  border-color: #1b4d3e;
-}
-@media (max-width: 500px) {
-  .nav-tab { font-size: 0.7rem; padding: 6px 8px; }
-}
-@media (max-width: 360px) {
-  .nav-tab { font-size: 0.6rem; padding: 4px 4px; }
-}
+        .site-logo {
+            max-width: 40px;
+            max-height: 40px;
+            border-radius: 10px;
+            border: 2px solid white;
+            background: white;
+            object-fit: contain;
+        }
 
-/* СЕКЦИИ */
-.section { display: none; }
-.section.active { display: block; }
+        h1 {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1b4d3e;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            line-height: 1.2;
+        }
 
-/* ХЕДЪР */
-.header-flex {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 15px;
-}
-h1 {
-  font-weight: 700;
-  font-size: clamp(1.2rem, 5vw, 1.9rem);
-  color: #1b4d3e;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  letter-spacing: -0.02em;
-}
-h1 span {
-  background: #ddeee5;
-  padding: 3px 10px;
-  border-radius: 50px;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: #0f4235;
-}
-.subtitle {
-  color: #547a6a;
-  font-size: 0.85rem;
-  border-left: 3px solid #a1c9b6;
-  padding-left: 10px;
-}
-h2 { font-size: 1.4rem; color: #1b4d3e; margin: 20px 0 12px; border-left: 6px solid #9bc5b4; padding-left: 15px; }
-h3 { font-size: 1.2rem; color: #23624b; margin: 18px 0 10px; }
+        h1 span {
+            background: #ddeee5;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.6rem;
+            font-weight: 500;
+            color: #0f4235;
+            width: fit-content;
+        }
 
-/* ТЕКСТ – ДВУСТРАННО ПОДРАВНЯВАНЕ */
-p, li, .article-content p, .image-caption {
-  text-align: justify;
-  word-break: break-word;
-}
+        .subtitle {
+            color: #547a6a;
+            font-size: 0.7rem;
+            margin-bottom: 10px;
+            border-left: 3px solid #9bc5b4;
+            padding-left: 8px;
+            font-weight: 500;
+        }
 
-/* ИЗОБРАЖЕНИЕ С МАРКЕРИ */
-.image-card {
-  background: #e7dfd3;
-  border-radius: 20px;
-  padding: 8px;
-  margin-bottom: 15px;
-}
-.image-wrapper {
-  position: relative;
-  border-radius: 18px;
-  overflow: hidden;
-  background: #5b6e64;
-  box-shadow: 0 6px 18px rgba(30, 60, 45, 0.25);
-}
-.specimen {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.marker {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(255, 235, 140, 0.95);
-  border: 3px solid white;
-  box-shadow: 0 3px 10px rgba(0, 40, 0, 0.6);
-  transform: translate(-50%, -50%);
-  cursor: help;
-  z-index: 10;
-}
-.marker-label {
-  position: absolute;
-  left: 50%;
-  top: 26px;
-  background: #1a332b;
-  color: #fcf5ea;
-  padding: 4px 10px;
-  font-size: 0.7rem;
-  font-weight: 500;
-  border-radius: 30px;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 20, 0, 0.4);
-  transform: translateX(-50%);
-  pointer-events: none;
-  border: 1px solid #7fb095;
-}
-@media (max-width: 500px) {
-  .marker { width: 18px; height: 18px; border-width: 2.5px; }
-  .marker-label { font-size: 0.6rem; padding: 3px 8px; top: 22px; white-space: normal; max-width: 100px; text-align: center; line-height: 1.2; }
-}
-.scale-bar {
-  position: absolute; bottom: 12px; left: 12px;
-  width: 50px; height: 4px; background: #f5ede1; border-radius: 4px;
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
-}
-.scale-label {
-  position: absolute; bottom: 24px; left: 12px;
-  background: #1e332be6; color: white; font-size: 0.6rem;
-  padding: 3px 8px; border-radius: 30px; backdrop-filter: blur(2px);
-}
+        .legend {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 8px 12px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,20,10,0.1);
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+            border: 1px solid #d0e0d6;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            white-space: nowrap;
+        }
 
-/* ПРОГРЕС БАР */
-.progress-section { margin: 10px 0 15px; }
-.progress-header {
-  display: flex; justify-content: space-between;
-  font-size: 0.85rem; color: #2e5f4b; margin-bottom: 5px;
-}
-.progress { height: 8px; background: #dbd2c6; border-radius: 20px; overflow: hidden; }
-.progress-inner { height: 100%; background: #1f7f5f; width: 0%; border-radius: 20px; transition: 0.2s; }
+        .legend::-webkit-scrollbar {
+            display: none;
+        }
 
-/* СТЪПКИ 1–10 */
-.steps-container {
-  background: #f4efe7;
-  border-radius: 24px;
-  padding: 18px 14px;
-  margin: 15px 0 12px;
-  border: 1px solid #d9cec0;
-  min-height: 300px;
-}
-.step { display: none; }
-.step.active { display: block; }
-.step-header {
-  font-size: 1.1rem; font-weight: 500; margin-bottom: 15px;
-  color: #1b4d3e; display: flex; align-items: center; gap: 6px;
-}
-.step-num {
-  background: #1b4d3e; color: white; width: 28px; height: 28px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 30px; font-size: 0.85rem; margin-right: 6px;
-}
-.options-grid { display: flex; flex-direction: column; gap: 10px; }
-.option {
-  background: white; border: 1px solid #bdd3c7; border-radius: 16px;
-  padding: 14px 18px; font-size: 0.95rem; font-weight: 500;
-  color: #1a4a39; cursor: pointer; transition: 0.15s;
-  box-shadow: 0 3px 8px #ddd3c6;
-}
-.option:hover { background: #dff0e5; border-color: #2a8f68; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #1b4d3e;
+            flex-shrink: 0;
+        }
 
-/* РЕЗУЛТАТ */
-.result-card {
-  background: #dff0e5; border-radius: 24px; padding: 16px 20px;
-  margin: 15px 0 8px; border-left: 8px solid #1f7f5f;
-  font-size: 1rem; font-weight: 550; color: #124734;
-  display: none; align-items: center; gap: 12px;
-}
-.result-card.show { display: flex; flex-wrap: wrap; }
-.result-icon { font-size: 2rem; background: #1f7f5f33; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
 
-.btn-restart {
-  background: transparent; border: 2px solid #2a7b60; color: #1e5743;
-  font-size: 1rem; font-weight: 600; padding: 10px 20px;
-  border-radius: 40px; cursor: pointer; margin: 5px 0 15px;
-  display: inline-flex; align-items: center; gap: 8px;
-}
-.btn-restart:hover { background: #1e5743; color: white; border-color: #1e5743; }
+        .legend-color.point {
+            background: #c0392b;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px #c0392b;
+        }
 
-/* СРАВНИТЕЛНА ТАБЛИЦА (с хоризонтален скрол) */
-.comparison-table {
-  margin: 25px 0 15px; background: white; border-radius: 22px;
-  padding: 16px; border: 1px solid #d0c9bc; overflow-x: auto;
-}
-.comparison-table table { min-width: 500px; border-collapse: collapse; width: 100%; }
-.comparison-table th { background: #1b4d3e; color: white; padding: 10px; text-align: left; border-radius: 12px 12px 0 0; }
-.comparison-table td { padding: 8px 10px; border-bottom: 1px solid #d0c9bc; }
-.comparison-table tr:last-child td { border-bottom: none; }
+        .legend-color.radius {
+            background: rgba(224, 124, 44, 0.2);
+            border: 2px solid #e07c2c;
+        }
 
-/* СТАТИЯ */
-.article-content {
-  background: #faf6f0; border-radius: 24px; padding: 20px;
-  margin: 10px 0; border: 1px solid #d9cec0;
-}
-.article-image { margin: 15px 0; border-radius: 16px; overflow: hidden; border: 1px solid #c4d4c8; }
-.article-image img { width: 100%; height: auto; display: block; }
-.image-caption { background: #e7dfd3; padding: 12px; font-size: 0.85rem; }
-.highlight-box { background: #e1f0e9; border-radius: 20px; padding: 18px; margin: 20px 0; border-left: 6px solid #1f7f5f; }
-.warning-box { background: #ffefdb; border-radius: 20px; padding: 18px; margin: 20px 0; border-left: 6px solid #e07c2c; }
-.bullet-list { list-style: none; }
-.bullet-list li { padding: 6px 0 6px 26px; position: relative; }
-.bullet-list li::before { content: '●'; color: #1f7f5f; font-size: 1.2rem; position: absolute; left: 0; top: 2px; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 12px; margin: 20px 0; }
-.stat-card { background: white; border-radius: 16px; padding: 15px; text-align: center; border: 1px solid #c4d4c8; }
-.stat-number { font-size: 1.8rem; font-weight: 700; color: #1f7f5f; }
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 45vh;
+            min-height: 320px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #cbdcd0;
+            box-shadow: 0 5px 15px rgba(20, 60, 45, 0.15);
+            margin-bottom: 12px;
+        }
 
-/* КАЛЕНДАР – напълно адаптивен */
-.seasonal-calendar { background: #f1f7f3; border-radius: 24px; padding: 16px; margin: 20px 0; border: 1px solid #cbdcd0; }
-.calendar-grid {
-  display: grid; grid-template-columns: repeat(12,1fr); gap: 3px; margin: 15px 0;
-}
-.month-header {
-  text-align: center; font-weight: 600; color: #1b4d3e;
-  font-size: 0.7rem; padding: 6px 0; background: #ddeee5; border-radius: 10px 10px 0 0;
-}
-.calendar-cell {
-  aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
-  font-size: 0.6rem; font-weight: 600; border-radius: 8px; text-align: center;
-  padding: 2px; cursor: help; transition: 0.1s;
-}
-@media (max-width: 500px) {
-  .calendar-cell { font-size: 0.45rem; }
-}
-.calendar-cell.eggs { background: #f8d7aa; border: 1px solid #e6b87e; }
-.calendar-cell.larvae { background: #c9e4c5; border: 1px solid #a5d6a5; }
-.calendar-cell.larvae2 { background: #a5d6a5; border: 1px solid #7fb97f; }
-.calendar-cell.adult { background: #ffd966; border: 1px solid #f0b429; }
-.calendar-cell.laying { background: #f9c6c9; border: 1px solid #e88a8a; }
-.calendar-cell.empty { background: #eae9e4; border: 1px solid #d6d2c8; opacity: 0.6; }
-.calendar-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 15px 0; padding: 10px; background: white; border-radius: 18px; }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
-.legend-color { width: 18px; height: 18px; border-radius: 6px; }
-.control-recommendations { background: white; border-radius: 18px; padding: 16px; margin-top: 15px; border: 1px solid #cbdcd0; }
-.control-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 10px; margin-top: 10px; }
-.control-item { background: #ecf6f0; border-radius: 16px; padding: 12px; border-left: 5px solid #1f7f5f; }
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
-/* НОВ РАЗДЕЛ: МОНИТОРИНГ */
-.monitoring-container {
-  background: #faf6f0;
-  border-radius: 24px;
-  padding: 20px;
-  margin: 10px 0;
-  border: 1px solid #d9cec0;
-}
-.trap-image-placeholder {
-  background: #d9e3dc;
-  border-radius: 16px;
-  padding: 40px 20px;
-  text-align: center;
-  margin: 20px 0;
-  border: 2px dashed #7fb095;
-  color: #23624b;
-  font-weight: 500;
-}
-.comparison-badge {
-  display: inline-block;
-  background: #1b4d3e;
-  color: white;
-  padding: 5px 12px;
-  border-radius: 50px;
-  font-size: 0.75rem;
-  margin-right: 8px;
-}
-.color-chip {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  margin-right: 6px;
-  vertical-align: middle;
-  border: 1px solid rgba(0,0,0,0.1);
-}
-.color-chip.yellow { background: #FFD700; }
-.color-chip.green { background: #90EE90; }
-.color-chip.blue { background: #87CEEB; }
-.color-chip.white { background: #F5F5F5; }
-.color-chip.black { background: #2F4F4F; }
+        .info-card {
+            background: linear-gradient(135deg, #f0f7f3 0%, #e8f2ec 100%);
+            border-radius: 20px;
+            padding: 12px;
+            margin-top: 0;
+            border-left: 5px solid #1f7f5f;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+        }
 
-/* НОВ РАЗДЕЛ: СЕТ (СУМА НА ЕФЕКТИВНИТЕ ТЕМПЕРАТУРИ) */
-.set-container {
-  background: #f0f7f3;
-  border-radius: 24px;
-  padding: 20px;
-  margin: 10px 0 20px;
-  border: 1px solid #cbdcd0;
-}
-.set-description {
-  background: #e8f2ec;
-  border-radius: 18px;
-  padding: 18px;
-  margin: 20px 0;
-  border-left: 6px solid #1f7f5f;
-}
-.set-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 20px 0;
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.set-table th {
-  background: #1b4d3e;
-  color: white;
-  padding: 12px 10px;
-  text-align: left;
-}
-.set-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #d0e0d6;
-}
-.set-table tr:last-child td {
-  border-bottom: none;
-}
-.set-highlight {
-  background: #ffefdb;
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin: 20px 0;
-  border-left: 6px solid #e07c2c;
-  font-weight: 500;
-}
-.set-iframe-container {
-  background: #ddeee5;
-  border-radius: 18px;
-  padding: 16px;
-  margin: 25px 0 10px;
-  text-align: center;
-}
-.set-iframe-container iframe {
-  max-width: 100%;
-  border: 2px solid #7fb095;
-  border-radius: 12px;
-  background: white;
-}
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.7);
+            padding: 8px 12px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(31,127,95,0.2);
+        }
 
-/* ФОРМУЛЯР */
-.form-container { background: #f1f7f3; border-radius: 28px; padding: 20px; margin: 15px 0; border: 1px solid #cbdcd0; }
-.form-title { font-size: 1.4rem; color: #1b4d3e; margin-bottom: 10px; display: flex; gap: 8px; }
-.form-subtitle { color: #547a6a; margin-bottom: 20px; font-size: 0.9rem; border-left: 3px solid #9bc5b4; padding-left: 14px; }
-.form-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
-@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
-.form-group { margin-bottom: 15px; }
-.form-group.full-width { grid-column: span 2; }
-@media (max-width: 600px) { .form-group.full-width { grid-column: span 1; } }
-.form-label { display: block; font-weight: 600; color: #1e5743; margin-bottom: 6px; font-size: 0.9rem; }
-.form-control { width: 100%; padding: 12px 16px; border: 2px solid #d0e0d6; border-radius: 16px; font-size: 0.95rem; background: white; }
-.form-control:focus { outline: none; border-color: #1f7f5f; box-shadow: 0 0 0 3px rgba(31,127,95,0.1); }
-.radio-group { background: white; border: 2px solid #d0e0d6; border-radius: 16px; padding: 10px 14px; }
-.radio-option { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-.checkbox-group { display: flex; align-items: center; gap: 12px; margin: 15px 0; }
-.file-upload { border: 2px dashed #9bc5b4; border-radius: 16px; padding: 20px; text-align: center; background: #ecf6f0; cursor: pointer; }
-.image-preview { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-.image-preview-item { width: 70px; height: 70px; border-radius: 12px; border: 2px solid #d0e0d6; overflow: hidden; position: relative; }
-.image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
-.image-preview-remove { position: absolute; top: -6px; right: -6px; background: #c0392b; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: 2px solid white; }
-.location-group { background: #e2ede6; border-radius: 16px; padding: 14px; margin: 15px 0; }
-.btn-location { background: white; border: 2px solid #1f7f5f; color: #1f7f5f; padding: 8px 16px; border-radius: 40px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+        .info-icon {
+            font-size: 1.3rem;
+            background: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,40,20,0.1);
+            border: 2px solid #9bc5b4;
+            flex-shrink: 0;
+        }
 
-/* БУТОНИ PDF */
-.action-buttons { display: flex; gap: 12px; margin: 25px 0 15px; flex-wrap: wrap; }
-.btn-pdf, .btn-clear { border: none; padding: 14px 24px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.15s; }
-.btn-pdf { background: #c0392b; color: white; flex: 2; justify-content: center; }
-.btn-pdf:hover { background: #a03226; transform: translateY(-2px); }
-.btn-clear { background: #dbd0c2; color: #1e5743; flex: 1; justify-content: center; }
+        .info-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
 
-/* КОНТАКТИ БАБХ */
-.babh-contact { background: #e1f0e9; border-radius: 22px; padding: 20px; margin: 30px 0 10px; border-left: 8px solid #1f7f5f; }
-.contact-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 12px; }
-.contact-item { display: flex; align-items: center; gap: 12px; background: white; padding: 12px 16px; border-radius: 50px; border: 1px solid #9bc5b4; }
-.contact-icon { font-size: 1.3rem; }
-.contact-text { color: #1e5743; font-weight: 500; }
-.emergency-note { background: #ffefdb; border-radius: 16px; padding: 14px; margin-top: 16px; font-weight: 600; color: #d45d1a; display: flex; gap: 12px; }
+        .info-label {
+            font-size: 0.6rem;
+            color: #547a6a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
 
-/* FOOTER - нов стил за надписа */
-.footer-note {
-  text-align: center;
-  margin-top: 30px;
-  padding: 16px 10px 8px;
-  border-top: 2px solid #dbd0c2;
-  color: #547a6a;
-  font-size: 0.85rem;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-}
-</style>
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1b4d3e;
+            line-height: 1.2;
+        }
+
+        .info-value small {
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: #547a6a;
+            margin-left: 3px;
+        }
+
+        .action-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            background: #ecf6f0;
+            border-radius: 30px;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            color: #1b4d3e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #9bc5b4;
+            backdrop-filter: blur(5px);
+            flex: 1;
+            white-space: nowrap;
+        }
+
+        .status-badge.connected {
+            background: #dff0e5;
+            color: #1f7f5f;
+            border-color: #1f7f5f;
+        }
+
+        .status-badge.error {
+            background: #ffefdb;
+            color: #e07c2c;
+            border-color: #e07c2c;
+        }
+
+        .refresh-btn {
+            background: #1b4d3e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+            border: 2px solid #1b4d3e;
+            box-shadow: 0 3px 8px rgba(27, 77, 62, 0.2);
+            flex-shrink: 0;
+        }
+
+        .refresh-btn:active {
+            background: #0f3a2e;
+            transform: scale(0.97);
+        }
+
+        /* Таблица с неприятели */
+        .pests-section {
+            margin-top: 16px;
+            background: #fefef7;
+            border-radius: 20px;
+            border: 1px solid #d0e0d6;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .pests-title {
+            background: #e4f0ea;
+            padding: 10px 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #1b4d3e;
+            border-bottom: 2px solid #9bc5b4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pests-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+            min-width: 500px;
+        }
+
+        .pests-table th {
+            background: #f0f7f3;
+            color: #1f5e4a;
+            font-weight: 700;
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #cbdcd0;
+            font-size: 0.7rem;
+        }
+
+        .pests-table td {
+            padding: 8px;
+            border-bottom: 1px solid #e2ece5;
+            color: #2a5a4a;
+            vertical-align: top;
+        }
+
+        .pests-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px 5px 5px;
+            border-top: 1px solid #dbd0c2;
+            color: #547a6a;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .toast-message {
+            background: linear-gradient(135deg, #1f7f5f, #1b4d3e);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            z-index: 10000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            animation: slideUp 0.2s ease, fadeOut 0.2s ease 2.3s forwards;
+            border: 2px solid white;
+        }
+
+        .toast-message.error {
+            background: linear-gradient(135deg, #e07c2c, #c0392b);
+        }
+
+        @keyframes slideUp {
+            from { bottom: 10px; opacity: 0; transform: scale(0.95); }
+            to { bottom: 20px; opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.9); }
+        }
+
+        /* премахване на стандартен popup анимация, но оставяме възможност за съдържание - няма да има клик маркер */
+        .leaflet-popup {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <div class="title-wrapper">
+            <img src="sitelogo.jpg" alt="Лого" class="site-logo" onerror="this.style.display='none'">
+            <h1>
+                СЕТ в радиус 15 км около град Велико Търново
+                <span>Сума на ефективните температури</span>
+            </h1>
+        </div>
 
-<!-- ЛАНДШАФТ ХИНТ -->
-<div class="orientation-hint show" id="orientationHint">
-  ⤻ Завъртете хоризонтално за по-удобен преглед на таблици и снимки
-</div>
+        <div class="subtitle">
+            📍 Велико Търново (43.0822°N, 25.6317°E) • Радиус 15 км
+        </div>
 
-<div class="container">
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color point"></div>
+                <span>🌾 Център (В. Търново)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color radius"></div>
+                <span>⚠️ Карантинна зона (15 км)</span>
+            </div>
+            <div class="legend-item">
+                <span>👆 Докоснете бутона за обновяване</span>
+            </div>
+        </div>
 
-<!-- НАВИГАЦИЯ 6 ТАБА (вече 6, добавяме СЕТ) -->
-<div class="nav-tabs">
-<div class="nav-tab active" onclick="switchTab('determinant')">🔬 Определител</div>
-<div class="nav-tab" onclick="switchTab('article')">📘 Flavescence Dorée</div>
-<div class="nav-tab" onclick="switchTab('monitoring')">🪤 Мониторинг</div>
-<div class="nav-tab" onclick="switchTab('calendar')">📅 Календар</div>
-<div class="nav-tab" onclick="switchTab('set')">🌡️ СЕТ</div> <!-- НОВ ТАБ -->
-<div class="nav-tab" onclick="switchTab('report')">🚨 Сигнализирай</div>
-</div>
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
 
-<!-- ========== СЕКЦИЯ 1: ОПРЕДЕЛИТЕЛ (10 СТЪПКИ) ========== -->
-<div class="section active" id="determinant">
-<div class="header-flex">
-<h1>🔬 Scaphoideus titanus <span>определител</span></h1>
-<div class="subtitle">10 морфологични белези</div>
-</div>
+        <div class="info-card">
+            <div class="info-row">
+                <div class="info-icon">🌡️</div>
+                <div class="info-content">
+                    <span class="info-label">СЕТ стойност</span>
+                    <span class="info-value" id="setValue">--- <small>°C·дни</small></span>
+                </div>
+            </div>
 
-<!-- КАРТА С МАРКЕРИ -->
-<div class="image-card">
-<div class="image-wrapper" id="imageBox">
-<img src="https://static.inaturalist.org/photos/147357382/large.jpg" class="specimen" alt="Scaphoideus titanus" />
-<div class="scale-bar"></div>
-<div class="scale-label">≈1 mm</div>
-</div>
-<p style="font-size:0.7rem; margin:5px 0 0;">⨯ докоснете маркерите за детайли</p>
-</div>
+            <div class="info-row">
+                <div class="info-icon">📅</div>
+                <div class="info-content">
+                    <span class="info-label">Дата</span>
+                    <span class="info-value" id="measurementDate">---</span>
+                </div>
+            </div>
 
-<!-- ПРОГРЕС -->
-<div class="progress-section">
-<div class="progress-header"><span>🔍 <span id="currentStep">1</span>/10</span> <span id="stepCounter">0/10</span></div>
-<div class="progress"><div class="progress-inner" id="progress"></div></div>
-</div>
+            <div class="action-row">
+                <div id="statusContainer" class="status-badge">
+                    <span id="statusIcon">🔄</span>
+                    <span id="statusText">Зареждане...</span>
+                </div>
 
-<!-- 10 СТЪПКИ -->
-<div class="steps-container" id="stepsContainer">
-<div class="step active" id="step1"><div class="step-header"><span class="step-num">1</span> Форма на тялото</div><div class="options-grid"><div class="option" onclick="nextStep('elongated')">📏 удължено, стройно</div><div class="option" onclick="nextStep('compact')">🟢 компактно, яйцевидно</div></div></div>
-<div class="step" id="step2"><div class="step-header"><span class="step-num">2</span> Жилкуване на крилото</div><div class="options-grid"><div class="option" onclick="nextStep('veins')">🕸️ ясна жилкова мрежа</div><div class="option" onclick="nextStep('plain')">🍃 почти без рисунък</div></div></div>
-<div class="step" id="step3"><div class="step-header"><span class="step-num">3</span> Задна тибия</div><div class="options-grid"><div class="option" onclick="nextStep('spines')">⚙️ добре развити шипове</div><div class="option" onclick="nextStep('no_spines')">🧴 без шипове</div></div></div>
-<div class="step" id="step4"><div class="step-header"><span class="step-num">4</span> Цвят глава/гръд</div><div class="options-grid"><div class="option" onclick="nextStep('head_yellow')">🟡 жълтеникави с петна</div><div class="option" onclick="nextStep('head_brown')">🟤 едноцветно кафяви</div><div class="option" onclick="nextStep('head_black')">⚫ черни или сиви</div></div></div>
-<div class="step" id="step5"><div class="step-header"><span class="step-num">5</span> Рисунък на предните крила</div><div class="options-grid"><div class="option" onclick="nextStep('wings_two_spots')">🎯 два тъмни щриха в основата</div><div class="option" onclick="nextStep('wings_reticulate')">🕸️ мрежест по цялото крило</div><div class="option" onclick="nextStep('wings_clear')">💧 прозрачни, почти без рисунък</div></div></div>
-<div class="step" id="step6"><div class="step-header"><span class="step-num">6</span> Размер</div><div class="options-grid"><div class="option" onclick="nextStep('size_small')">📏 4-5 mm</div><div class="option" onclick="nextStep('size_medium')">📐 5-6 mm</div><div class="option" onclick="nextStep('size_large')">📏 6-7 mm</div></div></div>
-<div class="step" id="step7"><div class="step-header"><span class="step-num">7</span> Оцветяване на краката</div><div class="options-grid"><div class="option" onclick="nextStep('legs_yellow')">🦵 жълтеникави с тъмни пръстени</div><div class="option" onclick="nextStep('legs_brown')">🦵 едноцветно кафяви</div><div class="option" onclick="nextStep('legs_spotted')">🦵 на петна</div></div></div>
-<div class="step" id="step8"><div class="step-header"><span class="step-num">8</span> Брой шипове на задната тибия</div><div class="options-grid"><div class="option" onclick="nextStep('spines_few')">🔢 2-4 шипа</div><div class="option" onclick="nextStep('spines_many')">🔢 5-8 шипа</div><div class="option" onclick="nextStep('spines_none')">❌ липсват</div></div></div>
-<div class="step" id="step9"><div class="step-header"><span class="step-num">9</span> Форма на главата (отгоре)</div><div class="options-grid"><div class="option" onclick="nextStep('head_triangular')">🔺 триъгълна, заострена</div><div class="option" onclick="nextStep('head_rounded')">⚪ закръглена, широка</div><div class="option" onclick="nextStep('head_rectangular')">⬛ правоъгълна</div></div></div>
-<div class="step" id="step10"><div class="step-header"><span class="step-num">10</span> Местоположение по лозата</div><div class="options-grid"><div class="option" onclick="nextStep('location_upper')">🌿 горна страна на листа</div><div class="option" onclick="nextStep('location_lower')">🍃 долна страна на листа</div><div class="option" onclick="nextStep('location_stem')">🌱 стъбла и леторасти</div></div></div>
-</div>
+                <button class="refresh-btn" onclick="loadSetData(true)">
+                    <span>🔄</span> Обнови
+                </button>
+            </div>
+        </div>
 
-<!-- РЕЗУЛТАТ -->
-<div class="result-card" id="result"><span class="result-icon">🧬</span><span id="resultText"></span></div>
-<button class="btn-restart" onclick="restart()">↻ Ново определяне</button>
+        <!-- Таблица с неприятели от set.csv -->
+        <div class="pests-section">
+            <div class="pests-title">
+                <span>🐛</span> Икономически важни неприятели – прагове на СЕТ
+            </div>
+            <div class="pests-table-wrapper">
+                <table class="pests-table">
+                    <thead>
+                        <tr>
+                            <th>Неприятел</th>
+                            <th>Фенофаза / Поколение</th>
+                            <th>Сума на ефект. темп. (СЕТ)</th>
+                            <th>Кога се третира?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Колорадски бръмбар</td><td>Излизане от почвата</td><td>50 - 70°C</td><td>При масово поникване на картофите</td></tr>
+                        <tr><td>Колорадски бръмбар</td><td>Масово излюпване (L1-L2)</td><td>140 - 160°C</td><td>Първо пръскане срещу ларви</td></tr>
+                        <tr><td>Зелева нощенка</td><td>Летеж на пеперудите (I пок.)</td><td>150 - 200°C</td><td>Начало на яйцеснасяне</td></tr>
+                        <tr><td>Зелева нощенка</td><td>Излюпване на гъсениците</td><td>350 - 400°C</td><td>При критична плътност</td></tr>
+                        <tr><td>Памукова нощенка</td><td>Поява на I поколение</td><td>200 - 250°C</td><td>При домати, пипер, патладжан</td></tr>
+                        <tr><td>Памукова нощенка</td><td>Масов летеж (II пок.)</td><td>550 - 600°C</td><td>Критичен период (юли-август)</td></tr>
+                        <tr><td>Лукова муха</td><td>Летеж на I поколение</td><td>110 - 130°C</td><td>Обикновено съвпада с цъфтежа на вишната</td></tr>
+                        <tr><td>Зелев молец</td><td>Масово излюпване</td><td>120 - 150°C</td><td>При ранно зеле</td></tr>
+                        <tr><td>Оранжерийна белокрилка</td><td>Едно пълно поколение</td><td>300 - 350°C</td><td>Наблюдава се при застъпване на фазите</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-<!-- СРАВНИТЕЛНА ТАБЛИЦА -->
-<div class="comparison-table">
-<h3>📊 Сравнение с подобни видове</h3>
-<table>
-<tr><th>Вид</th><th>Размер</th><th>Цвят</th><th>Шипове</th><th>Крила</th></tr>
-<tr><td><strong>Scaphoideus titanus</strong></td><td>4.5-6 mm</td><td>жълт/петна</td><td>5-8</td><td>два тъмни щриха</td></tr>
-<tr><td>Zyginidia pullula</td><td>3-4 mm</td><td>бледожълт</td><td>няма</td><td>прозрачни</td></tr>
-<tr><td>Empoasca vitis</td><td>3-4 mm</td><td>зеленикав</td><td>няма</td><td>прозрачни</td></tr>
-<tr><td>Hyalesthes obsoletus</td><td>4-5 mm</td><td>черен/бял прашец</td><td>няма</td><td>тъмни жилки</td></tr>
-</table></div>
-</div> <!-- край determinant -->
-
-<!-- ========== СЕКЦИЯ 2: СТАТИЯ (Flavescence Dorée) ========== -->
-<div class="section" id="article">
-<div class="header-flex"><h1>📘 Flavescence Dorée <span>фитосанитарен риск</span></h1></div>
-<div class="article-content">
-
-<div class="article-image">
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Flavescence_dor%C3%A9e_1.jpg/1280px-Flavescence_dor%C3%A9e_1.jpg" alt="Лозе">
-<div class="image-caption"><strong>Снимка 1:</strong> Лозе заразено с болестта (изт. Wikipedia)</div>
-</div>
-
-<p>Flavescence dorée (златисто пожълтяване) е опасно заболяване по лозата, причинено от фитоплазма и пренасяно от цикадата Scaphoideus titanus. Заболяването води до намален добив, изсъхване и гибел на лозите.</p>
-
-<h2>Симптоми</h2>
-<ul class="bullet-list">
-<li>Пожълтяване при белите сортове, зачервяване при червените</li>
-<li>Навиване на листата надолу</li>
-<li>Неузряване на леторастите</li>
-<li>Стерилност на съцветията</li>
-</ul>
-
-<div class="warning-box">
-<p><strong>⚠️ Критично:</strong> При над 20% заразени лози се налага изкореняване на цялото насаждение. Няма лечение – само превенция и контрол на вектора.</p>
-</div>
-
-<h2>Разпространение в България</h2>
-<p>През 2006 г. цикадата е установена в районите на Варна и Велико Търново. През 2025 г. е регистрирано първото огнище на болестта в лозов масив (EPPO, 2026).</p>
-
-<div class="stats-grid">
-<div class="stat-card"><div class="stat-number">до 80%</div><div class="stat-label">загуба на добив</div></div>
-<div class="stat-card"><div class="stat-number">20-30%</div><div class="stat-label">праг за изкореняване</div></div>
-</div>
-
-<h3>Преносител – Scaphoideus titanus</h3>
-<p>Цикадата презимува като яйца, ларвите се излюпват през пролетта, възрастните летят от юни до октомври. Храни се по лозата и пренася фитоплазмата.</p>
-
-<div class="highlight-box">
-<p><strong>Интегриран контрол:</strong> мониторинг, инсектицидни третирания срещу ларви, премахване на заразени растения, използване на здрави лози.</p>
-</div>
-</div></div>
-
-<!-- ========== СЕКЦИЯ 3: МОНИТОРИНГ (ЖЪЛТИ ЛЕПЛИВИ УЛОВКИ) ========== -->
-<div class="section" id="monitoring">
-  <div class="header-flex"><h1>🪤 Мониторинг с жълти уловки <span>Scaphoideus titanus</span></h1></div>
-  <div class="monitoring-container">
-
-    <!-- Встъпление -->
-    <p>Жълтите лепливи (летливи) уловки са стандартен метод за наблюдение на възрастните индивиди от <em>Scaphoideus titanus</em>. Те използват <strong>хромотропната реакция</strong> – силното привличане на цикадата към жълтия цвят. Това позволява ранно откриване, проследяване на динамиката на популацията и вземане на точни решения за растителна защита.</p>
-
-    <!-- Ключови насоки в кутийки -->
-    <div class="stats-grid" style="margin:25px 0;">
-      <div class="stat-card"><div class="stat-number">2-4</div><div class="stat-label">уловки/ха</div></div>
-      <div class="stat-card"><div class="stat-number">юли-септ.</div><div class="stat-label">активен период</div></div>
-      <div class="stat-card"><div class="stat-number">5-7 дни</div><div class="stat-label">период на смяна</div></div>
-      <div class="stat-card"><div class="stat-number">>10×</div><div class="stat-label">разлика в ефект.</div></div>
+        <div class="footer-note">
+            Данните се обновяват на всеки 5 мин • Google Sheets
+        </div>
     </div>
 
-    <!-- Място за снимка на уловка -->
-    <div class="trap-image-placeholder">
-     <img src="trap.jpg" class="specimen" alt="Scaphoideus titanus" />
-    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- Цветова ефективност (таблица вдясно) -->
-    <h3>🎨 Ефективност на цветовете (проучване 2021–2023)</h3>
-    <div style="overflow-x: auto; margin: 15px 0;">
-      <table style="width:100%; border-collapse: collapse; background: #ecf6f0; border-radius: 16px;">
-        <tr style="background: #1b4d3e; color: white;"><th>Цвят</th><th>Отн. улов</th><th>Забележка</th></tr>
-        <tr style="background: #fff9e6;"><td><span class="color-chip yellow"></span> Жълт</td><td><strong>висок</strong></td><td>най-привлекателен</td></tr>
-        <tr style="background: #f0f9f0;"><td><span class="color-chip green"></span> Зелен</td><td>среден</td><td>също атрактивен</td></tr>
-        <tr><td><span class="color-chip blue"></span> Син</td><td>нисък</td><td>слаба атракция</td></tr>
-        <tr><td><span class="color-chip white"></span> Бял</td><td>много нисък</td><td>–</td></tr>
-        <tr><td><span class="color-chip black"></span> Черен</td><td>много нисък</td><td>–</td></tr>
-      </table>
-    </div>
-    <p style="font-size:0.9rem">⚠️ Важно: Дори сред жълтите уловки има съществени разлики – някои търговски продукти (напр. Glutor) улавят 10 пъти повече от други (Super color). Изборът трябва да се базира на научни данни.</p>
+    <script>
+        // Нови координати: Велико Търново
+        const CENTER_LAT = 43.0822;
+        const CENTER_LNG = 25.6317;
+        const RADIUS_KM = 15;          // 15 километра
+        
+        // Актуален линк за Google Sheets (CSV)
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTWga6xwcZbXTCcrIywwQNdnG3biBvrk5am8gnnomjtyZPc_hDztwlqmPBTaTfe32dVSknwgPKWGTwo/pub?output=csv";
 
-    <!-- Практически насоки -->
-    <h3>🛠️ Практически насоки за поставяне</h3>
-    <ul class="bullet-list">
-      <li><strong>Брой:</strong> 2–4 уловки на хектар, равномерно разпределени.</li>
-      <li><strong>Височина:</strong> Окачват се в лозовия ред на височината на гроздовия пояс (около 1.2–1.5 m).</li>
-      <li><strong>Период:</strong> От началото на юли (първи възрастни) до края на септември.</li>
-      <li><strong>Смяна:</strong> На всеки 7–14 дни, за да не се препълнят и да запазят лепливост.</li>
-      <li><strong>Отчитане:</strong> Броят се всички уловени <em>S. titanus</em>. Препоръчва се лупа или микроскоп за потвърждение.</li>
-    </ul>
+        let map, marker, circle;
+        let autoRefreshInterval;
 
-    <!-- Автоматизирани системи -->
-    <div class="highlight-box">
-      <h4>🤖 Автоматизиран мониторинг (Trapview)</h4>
-      <p>Съвременните електронни капани съчетават жълта леплива плоскост с камера и GSM модул. Те изпращат ежедневни снимки в облачна платформа, където снимките могат да се разглеждат дистанционно. Проучвания доказват, че уловът е сравним с ръчния, а данните са в реално време.</p>
-    </div>
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([CENTER_LAT, CENTER_LNG], 11); // мащаб 11 за да се вижда добре радиус 15 км
 
-    <!-- Интегриране с контрол -->
-    <h3>📈 От мониторинг към решение</h3>
-    <p>Данните от уловките се използват за:</p>
-    <ul class="bullet-list">
-      <li>Оценка на ефективността на ларвицидни третирания (нисък улов на възрастни = успех).</li>
-      <li>Определяне нуждата от допълнителни третирания срещу възрастни (висок улов = риск от пренасяне на фитоплазма).</li>
-    </ul>
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
 
-    <!-- Бутон за връщане към началото на раздела (не е задължителен) -->
-    <div style="margin-top:30px; text-align:right;">
-      <span class="comparison-badge">Мониторинг спазвай SOP на БАБХ</span>
-    </div>
-  </div>
-</div>
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-<!-- ========== СЕКЦИЯ 4: СЕЗОНЕН КАЛЕНДАР ========== -->
-<div class="section" id="calendar">
-<div class="header-flex"><h1>📅 Сезонен календар <span>Scaphoideus titanus</span></h1></div>
-<div class="seasonal-calendar">
-<h3>📅 Жизнен цикъл на вектора</h3>
-<div class="calendar-grid">
-<!-- месеци -->
-<div class="month-header">Яну</div><div class="month-header">Фев</div><div class="month-header">Мар</div><div class="month-header">Апр</div><div class="month-header">Май</div><div class="month-header">Юни</div><div class="month-header">Юли</div><div class="month-header">Авг</div><div class="month-header">Сеп</div><div class="month-header">Окт</div><div class="month-header">Ное</div><div class="month-header">Дек</div>
+            // Маркер без popup - премахваме напълно popup функционалността
+            marker = L.marker([CENTER_LAT, CENTER_LNG], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: '<div style="background: #2c6e4f; width: 26px; height: 26px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 14px; background: #1f7f5f;">📍</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                })
+            }).addTo(map);
+            
+            // Забраняваме всякакъв popup да се показва при клик
+            marker.unbindPopup();
 
-<!-- яйца -->
-<div class="calendar-cell eggs">🥚</div><div class="calendar-cell eggs">🥚</div><div class="calendar-cell eggs">🥚</div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell eggs">🥚</div><div class="calendar-cell eggs">🥚</div><div class="calendar-cell eggs">🥚</div>
-<!-- ларви L1-2 -->
-<div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell larvae">L1-2</div><div class="calendar-cell larvae">L1-2</div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div>
-<!-- ларви L3-5 -->
-<div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell larvae2">L3-5</div><div class="calendar-cell larvae2">L3-5</div><div class="calendar-cell larvae2">L3-5</div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div>
-<!-- възрастни -->
-<div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell adult">🦟</div><div class="calendar-cell adult">🦟</div><div class="calendar-cell adult">🦟</div><div class="calendar-cell adult">🦟</div><div class="calendar-cell adult">🦟</div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div>
-<!-- снасяне -->
-<div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell laying">📥</div><div class="calendar-cell laying">📥</div><div class="calendar-cell laying">📥</div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div><div class="calendar-cell empty"></div>
-</div>
+            // Кръг с радиус 15 км
+            circle = L.circle([CENTER_LAT, CENTER_LNG], {
+                color: '#e07c2c',
+                weight: 4,
+                fillColor: 'rgba(224, 124, 44, 0.2)',
+                fillOpacity: 0.35,
+                radius: RADIUS_KM * 1000
+            }).addTo(map);
 
-<div class="calendar-legend">
-<span class="legend-item"><span class="legend-color eggs"></span> Яйца</span>
-<span class="legend-item"><span class="legend-color larvae"></span> Ларви L1-2</span>
-<span class="legend-item"><span class="legend-color larvae2"></span> Ларви L3-5</span>
-<span class="legend-item"><span class="legend-color adult"></span> Възрастни</span>
-<span class="legend-item"><span class="legend-color laying"></span> Снасяне</span>
-</div>
+            // Зареждане на СЕТ данни без popup маркер
+            loadSetData(false);
+        }
 
-<div class="control-recommendations">
-<h4>🛡️ Препоръки за контрол</h4>
-<div class="control-grid">
-<div class="control-item"><div class="control-month">Мар-Апр</div>🔍 Мониторинг на излюпване</div>
-<div class="control-item"><div class="control-month">Май-Юни</div>🧪 Третиране срещу ларви</div>
-<div class="control-item"><div class="control-month">Юли-Авг</div>⚠️ Инсектицидни обработки</div>
-<div class="control-item"><div class="control-month">Сеп-Окт</div>📊 Оценка на популацията</div>
-</div>
-</div></div></div>
+        // Парсване на CSV (поддръжка на кавички и запетаи)
+        function parseCSV(csvText) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = "";
+            let inQuotes = false;
 
-<!-- ========== СЕКЦИЯ 5: СЕТ (СУМА НА ЕФЕКТИВНИТЕ ТЕМПЕРАТУРИ) ========== -->
-<div class="section" id="set">
-<div class="header-flex"><h1>🌡️ Метод СЕТ <span>Сума на Ефективните Температури</span></h1></div>
-<div class="set-container">
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                const nextChar = csvText[i + 1];
 
-<!-- Текст от tekst.txt форматиран -->
-<div class="set-description">
-  <h2>Описание на метода:</h2>
-  <p>Методът Сума на Ефективните Температури (СЕТ) е фитосанитарен подход за прогнозиране развитието на вредители чрез натрупване на температурни данни. Принципът се основава на факта, че насекомите развиват по-бързо при по-високи температури и по-бавно при по-ниски.</p>
-  
-  <h3>Изчисление:</h3>
-  <ul class="bullet-list">
-    <li>Използва се биологичен минимум (базова температура) — за Scaphoideus titanus това е 10°C</li>
-    <li>Всеки ден се изчислява ефективната температура: средна денонощна температура - 10°C</li>
-    <li>Ефективните температури се сумират ежедневно от началото на сезона</li>
-    <li>Когато сумата достигне критичен праг, вредителят навлиза в уязвима фаза</li>
-  </ul>
-</div>
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentCell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentCell.trim());
+                    currentCell = "";
+                } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+                    if (char === '\r') i++;
+                    currentRow.push(currentCell.trim());
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentCell = "";
+                } else {
+                    currentCell += char;
+                }
+            }
+            if (currentCell !== "" || currentRow.length > 0) {
+                currentRow.push(currentCell.trim());
+                rows.push(currentRow);
+            }
+            return rows.filter(row => row.length > 1 || (row.length === 1 && row[0] !== ""));
+        }
 
-<h3>Приложение за Scaphoideus titanus</h3>
-<p>Scaphoideus titanus (американската лозена листна хърлева) е опасен вредител по лозата и вектор на флавесценс доре (жълтене на лозата).</p>
+        // Извличане на последна СЕТ стойност и дата от Google Sheets (предполагаме че таблицата съдържа колони с дата/СЕТ)
+        function extractSetFromCSV(dataRows) {
+            if (!dataRows || dataRows.length < 2) {
+                return null;
+            }
 
-<table class="set-table">
-  <tr><th>Параметър</th><th>Стойност</th></tr>
-  <tr><td>Базова температура</td><td>10°C</td></tr>
-  <tr><td>Праг за третиране</td><td>300–350 °C·дни</td></tr>
-  <tr><td>Фаза на уязвимост</td><td>Нимфи в ранни стадии</td></tr>
-  <tr><td>Период на приложение</td><td>Пролет/начало на лято</td></tr>
-</table>
+            const headers = dataRows[0];
+            const lastRow = dataRows[dataRows.length - 1];
 
-<div class="set-highlight">
-  <strong>Кога да се третира:</strong> Третирането е най-ефективно, когато натрупаната сума на ефективните температури достигне 300–350 °C·дни. В този момент нимфите са в най-чувствителната си фаза от развитието си и инсектицидната намеса дава най-добри резултати.
-</div>
+            const isEmpty = lastRow.every(cell => cell === "" || cell === undefined);
+            if (isEmpty && dataRows.length > 1) {
+                return null;
+            }
 
-<!-- Изисканото iframe с надпис -->
-<div class="set-iframe-container">
-  <h4 style="margin-top:0; color:#1b4d3e;">📊 СЕТ за град Свищов</h4>
-  <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSb6_bao-gP3qpHh80Nl5cIpOy0g0IUTymx0kyjFEgsX0aKbFFxgZ2tYt2ujzKtTlZhl7Ht6AEgRWAJ/pubhtml?gid=1198650928&amp;single=true&amp;range=D1" width="200" height="50"></iframe>
-  <p style="font-size:0.8rem; margin:10px 0 0; color:#547a6a;">Текуща стойност на СЕТ (примерни данни)</p>
-</div>
+            let setValue = null;
+            let dateValue = null;
+            let setColumnIndex = -1;
+            let dateColumnIndex = -1;
 
-</div></div>
+            // Търсене на колони със СЕТ (сума на ефективни температури) и дата
+            for (let i = 0; i < headers.length; i++) {
+                const header = headers[i].toLowerCase().trim();
+                // СЕТ, DD, set, sum, total_set, стойност, ефективни температури
+                if (header === 'dd' || header === 'сет' || header === 'set' || 
+                    header === 'сума сет' || header === 'total_sum' || header === 'стойност' ||
+                    header.includes('сет') || header.includes('sum') || header === 'cet') {
+                    setColumnIndex = i;
+                }
+                if (header === 'date' || header === 'дата' || header === 'ден' || 
+                    header === 'measurement_date' || header.includes('дата') || header === 'timestamp') {
+                    dateColumnIndex = i;
+                }
+            }
 
-<!-- ========== СЕКЦИЯ 6: ФОРМУЛЯР ЗА СИГНАЛИЗИРАНЕ ========== -->
-<div class="section" id="report">
-<div class="header-flex"><h1>🚨 Сигнализирай за огнище <span>БАБХ</span></h1></div>
-<div class="form-container" id="reportForm">
-<div class="form-title">📋 Формуляр за сигнал</div>
-<div class="form-subtitle">Полетата с * са задължителни</div>
+            // Ако не са намерени по подразбиране - първа колона дата, втора стойност (ако има поне 2 колони)
+            if (setColumnIndex === -1 && lastRow.length >= 2) {
+                setColumnIndex = 1;
+            }
+            if (dateColumnIndex === -1 && lastRow.length >= 1) {
+                dateColumnIndex = 0;
+            }
 
-<div class="form-grid">
-<!-- ляво -->
-<div>
-<h3>📍 Локация</h3>
-<div class="form-group"><label class="form-label">* Област</label><select class="form-control" id="region"><option>-- избери --</option><option>Варна</option><option>В. Търново</option></select></div>
-<div class="form-group"><label class="form-label">* Населено място</label><input class="form-control" id="city" placeholder="напр. Мелник"></div>
-<div class="form-group"><label class="form-label">Местност</label><input class="form-control" id="location" placeholder="парцел"></div>
-<div class="location-group"><label>📍 GPS (ако имате)</label><input class="form-control" id="lat" placeholder="lat"><input class="form-control" id="lng" placeholder="lng"></div>
-</div>
+            if (setColumnIndex !== -1 && lastRow[setColumnIndex] !== undefined) {
+                const rawValue = lastRow[setColumnIndex].toString().replace(',', '.');
+                const parsedValue = parseFloat(rawValue);
+                if (!isNaN(parsedValue)) {
+                    setValue = parsedValue;
+                }
+            }
 
-<!-- дясно -->
-<div>
-<h3>🪴 Данни за огнището</h3>
-<div class="form-group"><label class="form-label">* Степен</label>
-<div class="radio-group"><div class="radio-option"><input type="radio" name="severity" value="ниска"> 🔵 Ниска (<5%)</div>
-<div class="radio-option"><input type="radio" name="severity" value="средна"> 🟠 Средна (5-20%)</div>
-<div class="radio-option"><input type="radio" name="severity" value="висока"> 🔴 Висока (>20%)</div></div></div>
-<div class="form-group"><label class="form-label">* Сортове</label><input class="form-control" id="varieties" placeholder="напр. Мавруд"></div>
-<div class="form-group"><label class="form-label">* Площ</label><select class="form-control" id="area"><option><0.1 ха</option><option>0.1-0.5 ха</option></select></div>
-<div class="form-group"><label class="form-label">* Наличие на цикада</label>
-<div class="radio-group"><div class="radio-option"><input type="radio" name="vector" value="да"> ✅ Да</div>
-<div class="radio-option"><input type="radio" name="vector" value="не"> ❌ Не</div></div></div>
-</div>
-</div><!-- form-grid -->
+            if (dateColumnIndex !== -1 && lastRow[dateColumnIndex] !== undefined) {
+                dateValue = lastRow[dateColumnIndex];
+            }
 
-<div class="full-width">
-<div class="form-group"><label class="form-label">📸 Снимки</label><div class="file-upload" onclick="document.getElementById('fileInput').click()">📷 Кликнете за снимки<input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)" style="display:none;"></div><div class="image-preview" id="imagePreview"></div></div>
-<div class="form-group"><label class="form-label">📝 Доп. информация</label><textarea class="form-control" id="notes" rows="3"></textarea></div>
-<h3>👤 Контакт (незадължително)</h3>
-<div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;"><input class="form-control" placeholder="Име"><input class="form-control" placeholder="Телефон"><input class="form-control" placeholder="Имейл"></div>
-<div class="checkbox-group"><input type="checkbox" id="emergency"> <label for="emergency"><strong style="color:#c0392b;">🚨 Спешен случай (>30% заразени растения с болеста)</strong></label></div>
-</div>
+            if (setValue !== null) {
+                return { value: setValue, date: dateValue || '---' };
+            }
+            return null;
+        }
 
-<div class="action-buttons">
-<button class="btn-pdf" onclick="generatePDF()">📄 Генерирай PDF за БАБХ</button>
-<button class="btn-clear" onclick="clearForm()">🗑️ Изчисти</button>
-</div>
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === '---') return '---';
+            try {
+                if (dateStr.includes(' ')) dateStr = dateStr.split(' ')[0];
+                // YYYY-MM-DD
+                if (dateStr.includes('-')) {
+                    const [year, month, day] = dateStr.split('-');
+                    const date = new Date(year, month - 1, day);
+                    if (!isNaN(date.getTime())) {
+                        return date.toLocaleDateString('bg-BG', { day: 'numeric', month: 'long', year: 'numeric' });
+                    }
+                }
+                // DD.MM.YYYY
+                if (dateStr.includes('.')) {
+                    const parts = dateStr.split('.');
+                    if (parts.length === 3) {
+                        const [day, month, year] = parts;
+                        const date = new Date(year, month - 1, day);
+                        if (!isNaN(date.getTime())) {
+                            return date.toLocaleDateString('bg-BG', { day: 'numeric', month: 'long', year: 'numeric' });
+                        }
+                    }
+                }
+                // DD/MM/YYYY
+                if (dateStr.includes('/')) {
+                    const [day, month, year] = dateStr.split('/');
+                    const date = new Date(year, month - 1, day);
+                    if (!isNaN(date.getTime())) {
+                        return date.toLocaleDateString('bg-BG', { day: 'numeric', month: 'long', year: 'numeric' });
+                    }
+                }
+                return dateStr;
+            } catch (e) {
+                return dateStr;
+            }
+        }
 
-<div class="babh-contact">
-<div class="babh-title">🏛️ БАБХ – контакти</div>
-<div class="contact-grid">
-<div class="contact-item"><span class="contact-icon">📞</span><span class="contact-text">02 915 98 20</span></div>
-<div class="contact-item"><span class="contact-icon">📧</span><span class="contact-text">bz@bfsa.bg</span></div>
-<div class="contact-item"><span class="contact-icon">📍</span><span class="contact-text">бул. Пенчо Славейков 15А</span></div>
-</div>
-<div class="emergency-note"><span>⚠️</span> При спешни случаи – ОДБХ</div>
-</div>
-</div></div>
+        async function loadSetData(showMessage = false) {
+            const statusEl = document.getElementById('statusContainer');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const setValueEl = document.getElementById('setValue');
+            const measurementDateEl = document.getElementById('measurementDate');
 
-<!-- ========== FOOTER ========== -->
-<div class="footer-note">
-  проект на Българската асоциация за биологична растителна защита
-</div>
+            try {
+                statusEl.className = 'status-badge';
+                statusIcon.textContent = '🔄';
+                statusText.textContent = 'Свързване...';
 
-</div> <!-- .container -->
+                const response = await fetch(CSV_URL, {
+                    cache: "no-store",
+                    headers: { "Cache-Control": "no-cache" }
+                });
 
-<script>
-// ОПРЕДЕЛИТЕЛ – ЛОГИКА
-let answers = []; let step = 1;
-function nextStep(answer) { answers.push(answer); updateStepCounter(); if (step < 10) showStep(step+1); else identify(); updateProgress(); }
-function showStep(n) { document.querySelectorAll('.step').forEach(s=>s.classList.remove('active')); document.getElementById('step'+n)?.classList.add('active'); step=n; document.getElementById('currentStep').innerText=step; }
-function updateProgress() { document.getElementById('progress').style.width = (answers.length/10*100)+'%'; }
-function updateStepCounter() { document.getElementById('stepCounter').innerText = answers.length+'/10'; }
-function identify() { let c=0; if(answers[0]==='elongated')c+=10; if(answers[1]==='veins')c+=10; if(answers[2]==='spines')c+=15; if(answers[3]==='head_yellow')c+=8; if(answers[4]==='wings_two_spots')c+=12; if(answers[5]==='size_medium'||answers[5]==='size_large')c+=5; if(answers[6]==='legs_yellow')c+=5; if(answers[7]==='spines_many')c+=15; if(answers[8]==='head_triangular')c+=5; if(answers[9]==='location_lower'||answers[9]==='location_upper')c+=5; let txt=c>=70?'✓ Scaphoideus titanus '+c+'% увереност':c>=40?'⚠️ Вероятно S. titanus ('+c+'%)':'❓ Не може да се определи'; document.getElementById('resultText').innerText=txt; document.getElementById('result').classList.add('show'); }
-function restart(){ answers=[]; step=1; showStep(1); updateProgress(); updateStepCounter(); document.getElementById('result').classList.remove('show'); }
+                if (!response.ok) {
+                    throw new Error(`HTTP грешка: ${response.status}`);
+                }
 
-// НАВИГАЦИЯ МЕЖДУ РАЗДЕЛИТЕ (вече 6 таба)
-function switchTab(tabId) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  // Актуализиране на активния таб
-  const tabs = document.querySelectorAll('.nav-tab');
-  const tabIds = ['determinant', 'article', 'monitoring', 'calendar', 'set', 'report'];
-  tabs.forEach((t, idx) => {
-    t.classList.remove('active');
-    if (tabId === tabIds[idx]) {
-      t.classList.add('active');
-    }
-  });
-}
+                const csvText = await response.text();
+                if (!csvText.trim()) {
+                    throw new Error('Празен CSV файл');
+                }
 
-// МАРКЕРИ (симулация)
-const imageBox = document.getElementById("imageBox");
-if(imageBox) {
-  const markers = [{ name:"Вертекс", short:"Връх", x:20, y:45 }, { name:"Жилки (тъмни щрихи)", short:"Щрихи", x:55, y:45 }, { name:"Задна тибия с шипове", short:"Шипове", x:70, y:60 }];
-  markers.forEach(m => {
-    let el = document.createElement("div"); el.className = "marker";
-    el.style.left = m.x+'%'; el.style.top = m.y+'%';
-    let lbl = document.createElement("div"); lbl.className = "marker-label"; lbl.innerText = m.short;
-    el.appendChild(lbl);
-    el.addEventListener("mouseenter", ()=> lbl.innerText = m.name);
-    el.addEventListener("mouseleave", ()=> lbl.innerText = m.short);
-    el.addEventListener("touchstart", (e)=>{ e.preventDefault(); lbl.innerText = lbl.innerText===m.short ? m.name : m.short; });
-    imageBox.appendChild(el);
-  });
-}
+                const parsedData = parseCSV(csvText);
+                if (parsedData.length === 0) {
+                    throw new Error('Няма валидни редове в CSV');
+                }
 
-// ЛАНДШАФТ ХИНТ – скрива се след 5 сек
-setTimeout(() => {
-  let hint = document.getElementById('orientationHint');
-  if(hint) hint.style.display = 'none';
-}, 5000);
+                const extracted = extractSetFromCSV(parsedData);
+                if (!extracted || extracted.value === null) {
+                    throw new Error('Неуспешно извличане на СЕТ данни');
+                }
 
-// ЗАДЪЛЖИТЕЛНИ ФУНКЦИИ ЗА PDF/ФОРМУЛЯР (опростени)
-function generatePDF() { alert('PDF генериран (демо версия). Изпратете на bz@bfsa.bg'); }
-function clearForm() { if(confirm('Изчистване на формата?')) location.reload(); } // опростено
-function handleFiles(files) { console.log('Files selected:', files.length); }
-window.getCurrentLocation = function(){ alert('Геолокацията е симулирана'); }
+                const value = extracted.value;
+                const date = extracted.date;
 
-// СТАРТ
-updateStepCounter();
-</script>
+                setValueEl.innerHTML = `${value.toFixed(1)} <small>°C·дни</small>`;
+                measurementDateEl.textContent = formatDate(date);
 
+                statusEl.className = 'status-badge connected';
+                statusIcon.textContent = '✅';
+                statusText.textContent = 'Активна връзка';
+
+                if (showMessage) showToast('✅ СЕТ данните са обновени', false);
+            } catch (error) {
+                console.error('Грешка при зареждане:', error);
+                setValueEl.innerHTML = '--- <small>°C·дни</small>';
+                measurementDateEl.textContent = '---';
+                statusEl.className = 'status-badge error';
+                statusIcon.textContent = '⚠️';
+                statusText.textContent = 'Няма връзка';
+                if (showMessage) showToast('❌ Неуспешно зареждане на СЕТ', true);
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${isError ? 'error' : ''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            // Обновяване на всеки 5 минути
+            autoRefreshInterval = setInterval(() => loadSetData(false), 300000);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
+    </script>
 </body>
 </html>
