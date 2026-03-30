@@ -3,156 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>АЛЕРГО МЕТ - Сезонен радар</title>
+    <title>Алерго Мет - Твоят съветник за разходка</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&display=swap');
-        body { font-family: 'Manrope', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .risk-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { font-family: 'Manrope', sans-serif; background-color: #f0f2f5; }
+        .main-card { border-radius: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="pb-10">
 
-    <header class="bg-[#1e293b] text-white p-6 shadow-2xl sticky top-0 z-50 rounded-b-[2rem] border-b border-white/5">
+    <header class="bg-indigo-950 text-white p-6 sticky top-0 z-50 rounded-b-[2rem] shadow-xl">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-800 italic tracking-tighter text-sky-400">АЛЕРГО МЕТ</h1>
-                <p id="pollen-season" class="text-[10px] font-700 opacity-70 uppercase tracking-widest mt-1">
-                    Зареждане на сезон...
-                </p>
+                <h1 class="text-2xl font-800 tracking-tighter">🤧 Алерго <span class="text-emerald-400">Мет</span></h1>
+                <p class="text-[10px] uppercase font-bold opacity-60">Какъв е въздухът днес?</p>
             </div>
-            <button onclick="fetchData()" class="w-11 h-11 rounded-2xl bg-sky-500/10 flex items-center justify-center border border-sky-500/20 active:rotate-180 transition-all duration-500">
-                <i class="fa-solid fa-sync-alt text-sky-400 text-lg"></i>
+            <button onclick="fetchData()" class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center transition active:scale-90">
+                <i class="fa-solid fa-sync-alt"></i>
             </button>
         </div>
     </header>
 
-    <main id="app" class="max-w-md mx-auto p-4 space-y-6">
+    <main id="app" class="max-w-md mx-auto p-4 space-y-5">
         
-        <section class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
-            <h3 class="text-[11px] font-800 text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <i class="fa-solid fa-calendar-check text-sky-500"></i> Сезонен отчет
-            </h3>
-            <p class="text-xs font-700 text-slate-700 leading-relaxed">
-                В момента рискът е фокусиран върху <span class="text-indigo-600">Дървесни полени</span> (Бреза, Леска). 
-                <span class="opacity-60 block mt-1 font-600 italic">Липите и ливадните треви в момента НЕ са активни (очакват се юни/юли).</span>
+        <section class="bg-emerald-500 text-white p-6 rounded-[2rem] shadow-lg">
+            <h3 class="font-800 text-sm mb-1 uppercase tracking-wider">🗓️ Мартенски отчет:</h3>
+            <p class="text-xs font-600 opacity-90 leading-relaxed">
+                В момента е сезонът на <strong>Брезата и Ясена</strong>. 
+                <br>❌ <strong>Липите НЕ цъфтят в момента</strong> (чакаме ги юни).
             </p>
         </section>
 
         <div id="loader" class="flex flex-col items-center justify-center py-20">
-            <div class="w-10 h-10 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin"></div>
-            <p class="mt-4 font-800 text-slate-400 text-[10px] uppercase tracking-widest">Анализ на БГТОЛ сензори...</p>
+            <div class="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+            <p class="mt-4 font-800 text-slate-400 text-[10px] uppercase tracking-widest">Проверка на станциите...</p>
         </div>
 
-        <div id="data-list" class="space-y-6 hidden"></div>
+        <div id="data-list" class="space-y-6 hidden">
+            </div>
 
     </main>
-
-    <footer class="text-center py-6">
-        <p class="text-[9px] font-800 text-slate-300 uppercase tracking-[0.3em]">Agro Met System &bull; 2026</p>
-    </footer>
 
     <script>
         const API = 'https://treebombs.xyz/api.php';
 
-        // Функция за определяне на сезона
-        function setSeason() {
-            const month = new Date().getMonth(); // 0 = Jan, 2 = March
-            const el = document.getElementById('pollen-season');
-            if (month >= 1 && month <= 4) el.innerText = "Сезон: Дървесни полени (Бреза/Ясен)";
-            else if (month >= 5 && month <= 6) el.innerText = "Сезон: Треви и Липа";
-            else if (month >= 7) el.innerText = "Сезон: Амброзия и Пелин";
-            else el.innerText = "Извън активен сезон";
-        }
-
         async function fetchData() {
             const list = document.getElementById('data-list');
             const loader = document.getElementById('loader');
-            setSeason();
-            
             try {
                 const res = await fetch(API);
                 const data = await res.json();
-                
                 loader.style.display = 'none';
                 list.classList.remove('hidden');
                 list.innerHTML = '';
 
                 data.forEach(item => {
-                    const ui = getRiskAnalysis(item.stats.t, item.stats.h, item.stats.w);
+                    const status = getSimpleStatus(item.stats.t, item.stats.h, item.stats.w);
                     const card = document.createElement('div');
-                    card.className = `risk-card bg-white rounded-[2.5rem] shadow-xl border-b-[10px] ${ui.border} overflow-hidden`;
+                    card.className = `main-card bg-white p-6 border-b-[8px] ${status.border} overflow-hidden transition transform hover:scale-[1.01]`;
                     
                     card.innerHTML = `
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-6">
-                                <div>
-                                    <h2 class="text-2xl font-800 text-slate-800 tracking-tight">${item.region}</h2>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <span class="w-2 h-2 rounded-full ${ui.dotColor} shadow-sm"></span>
-                                        <p class="text-[10px] font-800 ${ui.textClass} uppercase tracking-widest">${ui.status}</p>
-                                    </div>
-                                </div>
-                                <div class="${ui.iconBg} w-14 h-14 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
-                                    <i class="${ui.icon}"></i>
-                                </div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="text-2xl font-800 text-slate-800 leading-none">${item.region}</h2>
+                                <p class="text-xs font-800 ${status.textClass} uppercase mt-2 tracking-widest">${status.label}</p>
                             </div>
+                            <div class="text-4xl">${status.emoji}</div>
+                        </div>
 
-                            <div class="grid grid-cols-3 gap-3 mb-6">
-                                <div class="bg-slate-50/80 p-3 rounded-2xl text-center border border-slate-100">
-                                    <span class="block text-[8px] text-slate-400 font-800 uppercase mb-1">Темп.</span>
-                                    <span class="text-lg font-800 text-slate-700 leading-none">${item.stats.t}°</span>
-                                </div>
-                                <div class="bg-slate-50/80 p-3 rounded-2xl text-center border border-slate-100">
-                                    <span class="block text-[8px] text-slate-400 font-800 uppercase mb-1">Влажност</span>
-                                    <span class="text-lg font-800 text-slate-700 leading-none">${item.stats.h}%</span>
-                                </div>
-                                <div class="bg-slate-50/80 p-3 rounded-2xl text-center border border-slate-100">
-                                    <span class="block text-[8px] text-slate-400 font-800 uppercase mb-1">Вятър</span>
-                                    <span class="text-lg font-800 text-slate-700 leading-none">${Math.round(item.stats.w)}</span>
-                                </div>
+                        <p class="text-sm font-700 text-slate-600 mb-6 leading-snug">
+                            ${status.message}
+                        </p>
+
+                        <div class="grid grid-cols-3 gap-2 bg-slate-50 p-4 rounded-2xl">
+                            <div class="text-center">
+                                <span class="block text-[8px] uppercase font-800 text-slate-400">Вятър</span>
+                                <span class="text-sm font-800 text-slate-700">${status.windDesc}</span>
                             </div>
-
-                            <div class="${ui.adviceBg} p-5 rounded-[1.8rem] flex items-start gap-4">
-                                <i class="fa-solid fa-circle-info mt-1 ${ui.textClass}"></i>
-                                <p class="text-[11px] font-700 ${ui.textClass} leading-relaxed italic">${ui.advice}</p>
+                            <div class="text-center border-x border-slate-200">
+                                <span class="block text-[8px] uppercase font-800 text-slate-400">Въздух</span>
+                                <span class="text-sm font-800 text-slate-700">${status.humDesc}</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="block text-[8px] uppercase font-800 text-slate-400">Вън</span>
+                                <span class="text-sm font-800 text-slate-700">${item.stats.t}°C</span>
                             </div>
                         </div>
                     `;
                     list.appendChild(card);
                 });
             } catch (e) {
-                loader.innerHTML = `<div class="p-8 text-center text-red-500 font-800 text-xs bg-red-50 rounded-3xl uppercase tracking-widest leading-loose">Грешка при връзката със сървъра</div>`;
+                loader.innerHTML = `<p class="text-red-500 font-bold">Грешка при връзката.</p>`;
             }
         }
 
-        function getRiskAnalysis(t, h, w) {
-            // КОНСЕРВАТИВНА ЛОГИКА - Повече зелено, по-малко паника
-            // КРИТИЧЕН (Червено) - Само при екстремна комбинация
-            if (w > 30 && h < 30 && t > 18) {
+        function getSimpleStatus(t, h, w) {
+            // КОНСЕРВАТИВНА ЛОГИКА - Само за обикновени хора
+            const isWindy = w > 18;
+            const isDry = h < 40;
+
+            if (isWindy && isDry) {
                 return {
-                    status: "Критичен Риск",
-                    advice: "Бурният вятър и силната суша разнасят алергените на десетки километри.",
-                    border: "border-red-500", textClass: "text-red-700", dotColor: "bg-red-500",
-                    iconBg: "bg-red-50 text-red-600", adviceBg: "bg-red-50", icon: "fa-solid fa-wind"
+                    label: "ИМАЙТЕ ЕДНО НА УМ",
+                    message: "Вятърът разнася прашец от брези. Ако сте алергични, измийте лицето си след прибиране.",
+                    emoji: "⚠️", border: "border-amber-400", textClass: "text-amber-600",
+                    windDesc: "Силен", humDesc: "Сух"
                 };
             }
-            // ПОВИШЕН (Жълто) - Когато условията наистина предразполагат
-            if (w > 20 || (h < 35 && t > 12)) {
-                return {
-                    status: "Повишен Риск",
-                    advice: "Въздухът е сух и вятърът е умерен. Дървесните полени са летливи.",
-                    border: "border-amber-400", textClass: "text-amber-700", dotColor: "bg-amber-400",
-                    iconBg: "bg-amber-50 text-amber-600", adviceBg: "bg-amber-50", icon: "fa-solid fa-leaf"
-                };
-            }
-            // НИСЪК (Зелено) - Стандартното време
+            
             return {
-                status: "Нисък Риск",
-                advice: "Нормални пролетни нива. Няма условия за масирано разнасяне на алергени.",
-                border: "border-emerald-500", textClass: "text-emerald-700", dotColor: "bg-emerald-500",
-                iconBg: "bg-emerald-50 text-emerald-600", adviceBg: "bg-emerald-50", icon: "fa-solid fa-face-smile"
+                label: "БЕЗОПАСНО ЗА РАЗХОДКА",
+                message: "Въздухът е спокоен. Полените са ниско до земята и няма опасност за алергичните.",
+                emoji: "✅", border: "border-emerald-500", textClass: "text-emerald-600",
+                windDesc: "Слаб", humDesc: "Приятен"
             };
         }
 
