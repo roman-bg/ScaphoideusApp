@@ -2,17 +2,28 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>АЛЕРГО ИНДЕКС | Вероятност за алергени в България</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>АЛЕРГО ИНДЕКС | България</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1256/1256059.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <link rel="apple-touch-icon" href="icons/icon-512.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap');
-        body { font-family: 'Manrope', sans-serif; background-color: #f8fafc; color: #1e293b; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Manrope', sans-serif; 
+            background-color: #f8fafc; 
+            color: #1e293b; 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: contain; /* Предотвратява "дърпането" за рефреш в Chrome */
+        }
         .glass-card { background: white; border-radius: 2rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
         .progress-bar { transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
@@ -41,27 +52,27 @@
                 <h2 class="text-xs font-800 uppercase tracking-widest text-slate-400">Анализ на вероятността</h2>
             </div>
 
-            <p class="text-slate-600 font-600 mb-4 leading-relaxed">
-                Този радар изчислява вероятността за разнасяне на алергени на база **вятърна дисперсия** и **СЕТ** (Сума от Ефективните Температури) за българската флора.
+            <p class="text-slate-600 font-600 mb-4 leading-relaxed text-xs">
+                Този радар изчислява вероятността за разнасяне на алергени на база <strong>вятърна дисперсия</strong> и <strong>СЕТ</strong> (Сума от Ефективните Температури).
             </p>
 
             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div class="flex justify-between items-end mb-2 text-[10px] font-800 uppercase tracking-tighter">
                     <span class="text-slate-400">Прогрес до цъфтеж на Липа</span>
-                    <span id="set-percent" class="text-sky-500 italic">Зареждане...</span>
+                    <span id="set-percent" class="text-sky-500 italic italic">Зареждане...</span>
                 </div>
                 <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden border border-slate-100/50">
                     <div id="set-bar" class="progress-bar bg-sky-500 h-full w-0 shadow-[0_0_8px_rgba(14,165,233,0.4)]"></div>
                 </div>
                 <p class="text-[9px] mt-2 text-slate-400 italic">
-                    *В момента доминират <strong>Топола и Бреза</strong>. Липата се активира при СЕТ над 350.
+                    *В момента доминират <strong>Топола и Бреза</strong>.
                 </p>
             </div>
         </section>
 
         <div id="loader" class="flex flex-col items-center justify-center py-12">
             <div class="w-10 h-10 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin"></div>
-            <p class="mt-4 font-800 text-slate-400 text-[10px] uppercase tracking-widest italic">Синхронизация със сензорите...</p>
+            <p class="mt-4 font-800 text-slate-400 text-[10px] uppercase tracking-widest italic">Синхронизация...</p>
         </div>
 
         <div id="data-list" class="space-y-4 hidden"></div>
@@ -85,12 +96,9 @@
                 updateSetUI(avgSet);
 
                 data.forEach(item => {
-                    const setVal = item.stats.set || avgSet;
-                    const ui = getRiskAnalysis(item.stats.t, item.stats.h, item.stats.w, setVal);
-
+                    const ui = getRiskAnalysis(item.stats.t, item.stats.h, item.stats.w, item.stats.set || avgSet);
                     const card = document.createElement('div');
                     card.className = `glass-card p-6 border-b-8 ${ui.borderColor} transform transition-all active:scale-[0.98]`;
-
                     card.innerHTML = `
                         <div class="flex justify-between items-start mb-5">
                             <div>
@@ -101,32 +109,27 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                                <span class="block text-[8px] uppercase font-800 text-slate-400 mb-1 italic leading-none">Температура</span>
+                                <span class="block text-[8px] uppercase font-800 text-slate-400 mb-1 italic leading-none">Темп.</span>
                                 <span class="text-lg font-800 text-slate-700 leading-none">${item.stats.t}°C</span>
                             </div>
                         </div>
-
                         <div class="${ui.bg} p-4 rounded-2xl mb-5 border border-slate-100/50">
-                            <p class="text-[11px] font-700 ${ui.textColor} leading-relaxed italic italic">
-                                "${ui.advice}"
-                            </p>
+                            <p class="text-[11px] font-700 ${ui.textColor} leading-relaxed italic">"${ui.advice}"</p>
                         </div>
-
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                                <span class="block text-[8px] uppercase font-800 text-slate-400 mb-1 leading-none text-center">Вятър</span>
+                                <span class="block text-[8px] uppercase font-800 text-slate-400 mb-1">Вятър</span>
                                 <span class="text-xs font-800 text-slate-700">${Math.round(item.stats.w)} km/h</span>
                             </div>
                             <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                                <span class="block text-[8px] uppercase font-800 text-slate-400 mb-1 leading-none text-center">Влажност</span>
+                                <span class="block text-[8px] uppercase font-800 text-slate-400 mb-1">Влажност</span>
                                 <span class="text-xs font-800 text-slate-700">${item.stats.h}%</span>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                     list.appendChild(card);
                 });
             } catch (e) {
-                loader.innerHTML = `<p class="p-8 text-center text-red-500 font-800 text-xs">API ГРЕШКА: ПРОВЕРЕТЕ ВРЪЗКАТА</p>`;
+                loader.innerHTML = `<p class="p-8 text-center text-red-500 font-800 text-xs uppercase">Грешка при връзката с API</p>`;
             }
         }
 
@@ -135,7 +138,6 @@
             const percentLabel = document.getElementById('set-percent');
             let percent = (avgSet / 350) * 100;
             if (percent > 100) percent = 100;
-
             bar.style.width = percent + "%";
             percentLabel.innerText = Math.round(percent) + "% (СЕТ: " + Math.round(avgSet) + ")";
         }
@@ -143,40 +145,23 @@
         function getRiskAnalysis(t, h, w, set) {
             const isHigh = w > 24 && h < 35;
             const isMid = w > 18 || (h < 40 && t > 12);
-
-            let currentPlant = "Топола и Бреза";
-            if (set >= 350 && set < 750) currentPlant = "Липа и Ливадни треви";
-            else if (set >= 750) currentPlant = "Пелин и Земеделски култури";
-
-            const adviceMsg = isHigh
-                ? `Критична дисперсия! Въздухът е наситен с частици от ${currentPlant}. Избягвайте излизане.`
-                : isMid
-                    ? `Повишена вероятност за пренос на ${currentPlant}. Чувствителните хора да внимават.`
-                    : `Ниска вероятност. Преносът на ${currentPlant} е минимален. Въздухът е спокоен.`;
-
-            if (isHigh) return {
-                label: "Критична Вероятност", advice: adviceMsg,
-                borderColor: "border-red-500", textColor: "text-red-700", dotColor: "bg-red-500", bg: "bg-red-50"
-            };
-            if (isMid) return {
-                label: "Средна Вероятност", advice: adviceMsg,
-                borderColor: "border-amber-400", textColor: "text-amber-700", dotColor: "bg-amber-400", bg: "bg-amber-50"
-            };
-            return {
-                label: "Ниска Вероятност", advice: adviceMsg,
-                borderColor: "border-emerald-500", textColor: "text-emerald-700", dotColor: "bg-emerald-500", bg: "bg-emerald-50"
-            };
+            let plant = (set >= 350) ? "Липа и треви" : "Топола и Бреза";
+            const adviceMsg = isHigh ? `Критична дисперсия на ${plant}!` : isMid ? `Повишен риск от ${plant}.` : `Минимален риск от ${plant}.`;
+            if (isHigh) return { label: "Критична", advice: adviceMsg, borderColor: "border-red-500", textColor: "text-red-700", dotColor: "bg-red-500", bg: "bg-red-50" };
+            if (isMid) return { label: "Средна", advice: adviceMsg, borderColor: "border-amber-400", textColor: "text-amber-700", dotColor: "bg-amber-400", bg: "bg-amber-50" };
+            return { label: "Ниска", advice: adviceMsg, borderColor: "border-emerald-500", textColor: "text-emerald-700", dotColor: "bg-emerald-500", bg: "bg-emerald-50" };
         }
 
         fetchData();
 
-        // PWA Регистриране за папка /alergo/
+        // Стабилна PWA регистрация
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/alergo/sw.js')
-              .then(() => console.log("PWA: Ready"))
-              .catch(err => console.log("PWA Error:", err));
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker регистриран! Спектър:', reg.scope))
+                .catch(err => console.log('SW грешка:', err));
+            });
         }
     </script>
 </body>
 </html>
-
