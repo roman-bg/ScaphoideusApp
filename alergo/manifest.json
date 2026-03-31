@@ -1,1 +1,18 @@
+{
+  "name": "Алерго Индекс България",
+  "short_name": "АлергоБГ",
+  "start_url": "/alergo/index.html",
+  "scope": "/alergo/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1256/1256059.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
 
